@@ -11,7 +11,7 @@ const apiConfig = {
   discoveryDocs: [
     'https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest'
   ],
-  scope: 'https://www.googleapis.com/auth/fitness.activity.read'
+  scope: 'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.location.read'
 }
 Vue.use(VueGAPI, apiConfig)
 

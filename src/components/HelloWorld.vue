@@ -35,21 +35,29 @@
         <a href="https://github.com/vuejs/awesome-vue" target="_blank">awesome-vue</a>
       </li>
     </ul>
+    <template v-for="(session, index) in sessions">
+      <session :key="'session_'+index" :session="session"></session>
+    </template>
   </div>
 </template>
 <script>
+import Session from './Session'
 export default {
   name: 'HelloWorld',
+  components: {
+    Session
+  },
   data() {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      msg: 'Welcome to Your Vue.js App',
+      sessions: []
     }
   },
   mounted() {
-    if (this.$isAuthenticated() !== true) {
-      this.$login().then(_ => this.execApi())
-    } else {
+    if (this.$isAuthenticated()) {
       this.execApi()
+    } else {
+      this.$login().then(_ => this.execApi())
     }
   },
   methods: {
@@ -60,10 +68,10 @@ export default {
             userId: 'me'
           })
           .then(
-            function(response) {
-              console.log(response.result)
+            response => {
+              this.sessions = response.result.session
             },
-            function(reason) {
+            reason => {
               console.log('Error: ' + reason.result.error.message)
             }
           )
