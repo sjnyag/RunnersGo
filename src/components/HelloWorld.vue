@@ -1,6 +1,7 @@
 <template>
   <div class="hello">
     <h1>{{ msg }}</h1>
+    <button v-if="!signedIn" v-on:click="signin">SignIn</button>
     <h2>Essential Links</h2>
     <ul>
       <li>
@@ -41,6 +42,7 @@
   </div>
 </template>
 <script>
+import { mapActions } from 'vuex'
 import Session from './Session'
 export default {
   name: 'HelloWorld',
@@ -50,33 +52,41 @@ export default {
   data() {
     return {
       msg: 'Welcome to Your Vue.js App',
-      sessions: []
+      sessions: [],
+      signedIn: true
     }
   },
   mounted() {
-    if (this.$isAuthenticated()) {
-      this.execApi()
-    } else {
-      this.$login().then(_ => this.execApi())
-    }
+    this.isSignedIn().then(isSignedIn => {
+      if (isSignedIn) {
+        this.execApi()
+      } else {
+        this.signedIn = false
+      }
+    })
   },
   methods: {
-    execApi() {
-      this.$getGapiClient().then(gapi => {
-        gapi.client.fitness.users.sessions
-          .list({
-            userId: 'me'
-          })
-          .then(
-            response => {
-              this.sessions = response.result.session
-            },
-            reason => {
-              console.log('Error: ' + reason.result.error.message)
-            }
-          )
+    signin() {
+      this.signIn().then(_ => {
+        this.signedIn = true
+        this.execApi()
       })
-    }
+    },
+    execApi() {
+      window.gapi.client.fitness.users.sessions
+        .list({
+          userId: 'me'
+        })
+        .then(
+          response => {
+            this.sessions = response.result.session
+          },
+          reason => {
+            console.log('Error: ' + reason.result.error.message)
+          }
+        )
+    },
+    ...mapActions('auth', ['isSignedIn', 'signIn', 'signOut'])
   }
 }
 </script>

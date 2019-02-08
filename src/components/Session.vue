@@ -8,6 +8,7 @@
   </div>
 </template>
 <script>
+import { mapActions } from 'vuex'
 import moment from 'moment'
 export default {
   name: 'Session',
@@ -21,11 +22,13 @@ export default {
     }
   },
   mounted() {
-    if (this.$isAuthenticated() !== true) {
-      this.$login().then(_ => this.calcDetail())
-    } else {
-      this.calcDetail()
-    }
+    this.isSignedIn().then(isSignedIn => {
+      if (isSignedIn) {
+        this.calcDetail()
+      } else {
+        this.signIn().then(_ => this.calcDetail())
+      }
+    })
   },
   computed: {
     period: function() {
@@ -77,8 +80,9 @@ export default {
   },
   methods: {
     calcSpeed() {
-      this.$getGapiClient().then(gapi => {
-        gapi.client.fitness.users.dataset.aggregate(this.speedRequest).then(
+      window.gapi.client.fitness.users.dataset
+        .aggregate(this.speedRequest)
+        .then(
           response => {
             if (response.result.bucket.length === 0) {
               return
@@ -95,11 +99,11 @@ export default {
             console.log('Error: ' + reason.result.error.message)
           }
         )
-      })
     },
     calcDetail() {
-      this.$getGapiClient().then(gapi => {
-        gapi.client.fitness.users.dataset.aggregate(this.aggregateRequest).then(
+      window.gapi.client.fitness.users.dataset
+        .aggregate(this.aggregateRequest)
+        .then(
           response => {
             if (response.result.bucket.length === 0) {
               return
@@ -114,14 +118,14 @@ export default {
             console.log('Error: ' + reason.result.error.message)
           }
         )
-      })
     },
     toMoment(timeMills) {
       return moment(new Date(parseInt(timeMills)))
     },
     formatDate(timeMills) {
       return this.toMoment(timeMills).format('YYYY/MM/DD HH:mm')
-    }
+    },
+    ...mapActions('auth', ['isSignedIn', 'signIn', 'signOut'])
   }
 }
 </script>
