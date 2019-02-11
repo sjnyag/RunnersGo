@@ -1,9 +1,9 @@
 <template>
   <div style="background-color:#DAFFAD;">
-    <p>{{session.name}}</p>
+    <p>{{formatDate(startTime)}}</p>
     <p>{{period}}</p>
     <p>{{elapsedTime}}</p>
-    <p>{{step_count}} 歩</p>
+    <p>{{stepCount}} 歩</p>
     <p>{{distance}} メートル</p>
   </div>
 </template>
@@ -17,8 +17,12 @@ export default {
   },
   data: function() {
     return {
-      step_count: null,
-      distance: null
+      stepCount: 0,
+      distance: 0,
+      period: null,
+      elapsedTime: null,
+      startTime: null,
+      endTime: null
     }
   },
   mounted() {
@@ -31,22 +35,16 @@ export default {
     })
   },
   computed: {
-    period: function() {
-      return (
-        this.formatDate(this.session.startTimeMillis) +
-        '~' +
-        this.formatDate(this.session.endTimeMillis)
-      )
+    sessionStartTime: function() {
+      return this.nanoStringToMoment(
+        this.session.summary.startTimeNanos
+      ).subtract(2, 'minutes')
     },
-    elapsedTime: function() {
-      let seconds = this.toMoment(this.session.endTimeMillis).diff(
-        this.toMoment(this.session.startTimeMillis),
-        'seconds',
-        true
+    sessionEndTime: function() {
+      return this.nanoStringToMoment(this.session.summary.endTimeNanos).add(
+        2,
+        'minutes'
       )
-      const minute = parseInt(seconds / 60)
-      seconds = parseInt(seconds - minute * 60)
-      return minute + '分' + seconds + '秒'
     },
     aggregateRequest: function() {
       return {
@@ -59,9 +57,9 @@ export default {
             dataTypeName: 'com.google.step_count.delta'
           }
         ],
-        bucketBySession: { minDurationMillis: 100 },
-        startTimeMillis: parseInt(this.session.startTimeMillis),
-        endTimeMillis: parseInt(this.session.endTimeMillis)
+        bucketByTime: { durationMillis: 60000 },
+        startTimeMillis: this.sessionStartTime.unix() * 1000,
+        endTimeMillis: this.sessionEndTime.unix() * 1000
       }
     },
     speedRequest: function() {
@@ -73,32 +71,32 @@ export default {
           }
         ],
         bucketByTime: { durationMillis: 600000 },
-        startTimeMillis: parseInt(this.session.startTimeMillis),
-        endTimeMillis: parseInt(this.session.endTimeMillis)
+        startTimeMillis: this.sessionStartTime.unix() * 1000,
+        endTimeMillis: this.sessionEndTime.unix() * 1000
       }
     }
   },
   methods: {
     calcSpeed() {
-      window.gapi.client.fitness.users.dataset
-        .aggregate(this.speedRequest)
-        .then(
-          response => {
-            if (response.result.bucket.length === 0) {
-              return
-            }
-            response.result.bucket.forEach(bucket => {
-              if (bucket.dataset[0].point.length !== 0) {
-                bucket.dataset[0].point[0].value.forEach(value => {
-                  console.log(value)
-                })
-              }
-            })
-          },
-          reason => {
-            console.log('Error: ' + reason.result.error.message)
-          }
-        )
+      // window.gapi.client.fitness.users.dataset
+      //   .aggregate(this.speedRequest)
+      //   .then(
+      //     response => {
+      //       if (response.result.bucket.length === 0) {
+      //         return
+      //       }
+      //       response.result.bucket.forEach(bucket => {
+      //         if (bucket.dataset[0].point.length !== 0) {
+      //           bucket.dataset[0].point[0].value.forEach(value => {
+      //             console.log(value)
+      //           })
+      //         }
+      //       })
+      //     },
+      //     reason => {
+      //       console.log('Error: ' + reason.result.error.message)
+      //     }
+      //   )
     },
     calcDetail() {
       window.gapi.client.fitness.users.dataset
@@ -108,22 +106,58 @@ export default {
             if (response.result.bucket.length === 0) {
               return
             }
-            this.step_count =
-              response.result.bucket[0].dataset[1].point[0].value[0].intVal
-            this.distance =
-              response.result.bucket[0].dataset[0].point[0].value[0].fpVal
-            this.calcSpeed()
+            this._.each(response.result.bucket, bucket => {
+              if (bucket.dataset[0].point.length > 0) {
+                if (this.startTime === null) {
+                  this.startTime = this.nanoStringToMoment(
+                    bucket.dataset[0].point[0].startTimeNanos
+                  )
+                }
+                this.endTime = this.nanoStringToMoment(
+                  bucket.dataset[0].point[0].endTimeNanos
+                )
+                this.distance += bucket.dataset[0].point[0].value[0].fpVal
+              }
+              if (bucket.dataset[1].point.length > 0) {
+                if (this.startTime === null) {
+                  this.startTime = this.nanoStringToMoment(
+                    bucket.dataset[1].point[0].startTimeNanos
+                  )
+                }
+                this.endTime = this.nanoStringToMoment(
+                  bucket.dataset[1].point[0].endTimeNanos
+                )
+                this.stepCount += bucket.dataset[1].point[0].value[0].intVal
+              }
+            })
+            this.stepCount = Math.round(this.stepCount)
+            this.distance = Math.round(this.distance)
+            this.period = this.calcPeriod(this.startTime, this.endTime)
+            this.elapsedTime = this.calcElapsedTime(
+              this.startTime,
+              this.endTime
+            )
+            // this.calcSpeed()
           },
           reason => {
             console.log('Error: ' + reason.result.error.message)
           }
         )
     },
-    toMoment(timeMills) {
-      return moment(new Date(parseInt(timeMills)))
+    calcPeriod: function(start, end) {
+      return this.formatDate(start) + '~' + this.formatDate(end)
     },
-    formatDate(timeMills) {
-      return this.toMoment(timeMills).format('YYYY/MM/DD HH:mm')
+    calcElapsedTime: function(start, end) {
+      let seconds = end.diff(start, 'seconds', true)
+      const minute = parseInt(seconds / 60)
+      seconds = parseInt(seconds - minute * 60)
+      return minute + '分' + seconds + '秒'
+    },
+    formatDate(moment) {
+      return moment.format('YYYY/MM/DD HH:mm')
+    },
+    nanoStringToMoment(nano) {
+      return moment(new Date(parseInt(nano) / 1000000))
     },
     ...mapActions('auth', ['isSignedIn', 'signIn', 'signOut'])
   }

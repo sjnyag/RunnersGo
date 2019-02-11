@@ -5,6 +5,9 @@ import App from './App'
 import router from './router'
 import store from './store/index'
 import { sync } from 'vuex-router-sync'
+import lodash from 'lodash'
+
+Object.defineProperty(Vue.prototype, '_', { value: lodash })
 
 sync(store, router)
 
