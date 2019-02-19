@@ -2,6 +2,7 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
+import Header from './Header'
 import router from './router'
 import store from './store/index'
 import { sync } from 'vuex-router-sync'
@@ -57,4 +58,13 @@ new Vue({
   store,
   components: { App },
   template: '<App/>'
+})
+
+/* eslint-disable no-new */
+new Vue({
+  el: '#header',
+  router,
+  store,
+  components: { Header },
+  template: '<Header/>'
 })

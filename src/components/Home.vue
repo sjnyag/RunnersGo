@@ -27,12 +27,8 @@ export default {
       window.gapi.client.fitness.users.dataSources.datasets
         .get({
           userId: 'me',
-          dataSourceId:
-            'derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes',
-          datasetId:
-            this.lastWeek().unix() * 1000 * 1000 * 1000 +
-            '-' +
-            moment().unix() * 1000 * 1000 * 1000
+          dataSourceId: 'derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes',
+          datasetId: this.lastWeek().unix() * 1000 * 1000 * 1000 + '-' + moment().unix() * 1000 * 1000 * 1000
         })
         .then(
           response => {
@@ -40,11 +36,7 @@ export default {
               return (after - before) / (1000 * 1000 * 1000) < 15 * 60
             }
             const isWorkout = function(summary) {
-              return (
-                (summary.endTimeNanos - summary.startTimeNanos) /
-                  (1000 * 1000 * 1000) >
-                5 * 60
-              )
+              return (summary.endTimeNanos - summary.startTimeNanos) / (1000 * 1000 * 1000) > 5 * 60
             }
             let before = 0
             const result = []
@@ -60,9 +52,7 @@ export default {
               }
               before = point.endTimeNanos
             })
-            this.sessions = this._.reverse(
-              this._.filter(result, point => isWorkout(point.summary))
-            )
+            this.sessions = this._.reverse(this._.filter(result, point => isWorkout(point.summary)))
           },
           reason => {
             console.log('Error: ' + reason.result.error.message)
@@ -75,22 +65,3 @@ export default {
   }
 }
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h1,
-h2 {
-  font-weight: normal;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
