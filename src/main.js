@@ -36,7 +36,7 @@ firebase.auth().onAuthStateChanged(user => {
         window.gapi.client
           .init(apiConfig)
           .then(_ => {
-            router.push('/')
+            router.push('/home')
           })
           .catch(_ => {
             firebase.auth().signOut()
@@ -45,6 +45,8 @@ firebase.auth().onAuthStateChanged(user => {
     }
     // Add to the document
     document.getElementsByTagName('head')[0].appendChild(script)
+  } else {
+    router.push('/login')
   }
 })
 

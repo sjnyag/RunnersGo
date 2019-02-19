@@ -9,7 +9,7 @@
 import Session from './Session'
 import moment from 'moment'
 export default {
-  name: 'HelloWorld',
+  name: 'Home',
   components: {
     Session
   },
@@ -20,11 +20,7 @@ export default {
     }
   },
   mounted() {
-    if (!window.gapi) {
-      this.$router.push('/login')
-    } else {
-      this.execApi()
-    }
+    this.execApi()
   },
   methods: {
     execApi() {
