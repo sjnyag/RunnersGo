@@ -8,7 +8,6 @@
   </div>
 </template>
 <script>
-import { mapActions } from 'vuex'
 import moment from 'moment'
 export default {
   name: 'Session',
@@ -26,13 +25,7 @@ export default {
     }
   },
   mounted() {
-    this.isSignedIn().then(isSignedIn => {
-      if (isSignedIn) {
-        this.calcDetail()
-      } else {
-        this.signIn().then(_ => this.calcDetail())
-      }
-    })
+    this.calcDetail()
   },
   computed: {
     sessionStartTime: function() {
@@ -153,13 +146,15 @@ export default {
       seconds = parseInt(seconds - minute * 60)
       return minute + '分' + seconds + '秒'
     },
-    formatDate(moment) {
-      return moment.format('YYYY/MM/DD HH:mm')
+    formatDate(momentTime) {
+      if (!momentTime) {
+        return ''
+      }
+      return momentTime.format('YYYY/MM/DD HH:mm')
     },
     nanoStringToMoment(nano) {
       return moment(new Date(parseInt(nano) / 1000000))
-    },
-    ...mapActions('auth', ['isSignedIn', 'signIn', 'signOut'])
+    }
   }
 }
 </script>

@@ -6,34 +6,36 @@ const state = {
 }
 
 const apiConfig = {
-  apiKey: 'AIzaSyBeGTXxeCc77sTLG81XaryK60i3GKrTTqM',
-  clientId:
-    '762064213637-np6vfbar65jjc5gderi14kfabred9rcf.apps.googleusercontent.com',
-  discoveryDocs: [
-    'https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest'
-  ],
-  scope:
-    'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.location.read'
+  apiKey: process.env.config.apiKey,
+  clientId: process.env.config.clientId,
+  discoveryDocs: process.env.config.discoveryDocs,
+  scope: process.env.config.scopes.join(' ')
 }
 
 const actions = {
   initGapi({ commit }) {
+    console.log('init gapi...')
     return new Promise((resolve, reject) => {
-      window.gapi.load('client:auth2', {
-        callback: () => {
-          window.gapi.client
-            .init(apiConfig)
-            .then(() => {
-              resolve()
-            })
-            .catch(err => {
-              reject(err)
-            })
-        }
-      })
+      if (!window.gapi) {
+        reject(new Error('API initialize error'))
+      } else {
+        window.gapi.load('client:auth2', {
+          callback: () => {
+            window.gapi.client
+              .init(apiConfig)
+              .then(() => {
+                resolve()
+              })
+              .catch(err => {
+                reject(err)
+              })
+          }
+        })
+      }
     })
   },
   isSignedIn({ dispatch, commit, state }) {
+    console.log('check if signed in...')
     return new Promise((resolve, reject) => {
       dispatch('initGapi').then(() => {
         var currentUser = null
