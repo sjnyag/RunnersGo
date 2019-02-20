@@ -1,5 +1,6 @@
 <template>
   <div class="hello">
+    <img :src="image">
     <template v-for="(session, index) in sessions">
       <session :key="'session_'+index" :session="session"></session>
     </template>
@@ -8,6 +9,9 @@
 <script>
 import Session from './Session'
 import moment from 'moment'
+
+import firebase from 'firebase/app'
+require('firebase/firestore')
 export default {
   name: 'Home',
   components: {
@@ -16,11 +20,47 @@ export default {
   data() {
     return {
       sessions: [],
-      signedIn: true
+      signedIn: true,
+      image: 'https://picsum.photos/96/96'
     }
   },
   mounted() {
-    this.execApi()
+    const profile = window.gapi.auth2
+      .getAuthInstance()
+      .currentUser.get()
+      .getBasicProfile()
+    const id = profile.getId()
+    const image = profile.getImageUrl()
+    window.firebase = firebase
+    window.db = firebase.firestore()
+    window.db
+      .collection('users')
+      .doc(id)
+      .set(
+        {
+          image: image
+        },
+        { merge: true }
+      )
+      .catch(error => {
+        console.error('Error adding document: ', error)
+      })
+
+    window.db
+      .collection('users')
+      .doc(id)
+      .get()
+      .then(doc => {
+        if (doc.exists) {
+          this.image = doc.data().image
+        } else {
+          console.log('No such document!')
+        }
+      })
+      .catch(function(error) {
+        console.log('Error getting document:', error)
+      })
+    // this.execApi()
   },
   methods: {
     execApi() {
