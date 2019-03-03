@@ -35,7 +35,7 @@ export default {
 @import '@material/top-app-bar/mdc-top-app-bar.scss';
 
 .mdc-top-app-bar {
-  @include mdc-top-app-bar-fill-color-accessible(#112244);
+  @include mdc-top-app-bar-fill-color-accessible(#FF9800);
   @include mdc-top-app-bar-icon-ink-color(on-primary);
 }
 </style>
