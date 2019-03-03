@@ -17,5 +17,6 @@ module.exports = {
       'https://www.googleapis.com/auth/fitness.activity.read',
       'https://www.googleapis.com/auth/fitness.location.read'
     ]
-  }`
+  }`,
+  public_valid_key: '"BPCS-Hb6qRiiPHD7u7Hr-MiSo5k7voBnFLJ_pl6DXRpi5kUm4mdTze5vb4Fl4jNQOzHDCmjBkg9twwYOgFFAno4"'
 }

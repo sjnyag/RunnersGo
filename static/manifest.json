@@ -1,6 +1,6 @@
 {
-  "name": "runners_go",
-  "short_name": "runners_go",
+  "name": "Runners GO",
+  "short_name": "Runners GO",
   "icons": [
     {
       "src": "/static/img/icons/android-chrome-192x192.png",
@@ -15,6 +15,7 @@
   ],
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#4DBA87"
+  "background_color": "#FFB74D",
+  "theme_color": "#FF9800",
+  "gcm_sender_id": "103953800507"
 }

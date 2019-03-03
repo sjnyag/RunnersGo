@@ -1,22 +1,21 @@
-(function() {
-  'use strict';
+;(function() {
+  'use strict'
 
   // Check to make sure service workers are supported in the current browser,
   // and that the current page is accessed from a secure origin. Using a
   // service worker from an insecure origin will trigger JS console errors.
-  var isLocalhost = Boolean(window.location.hostname === 'localhost' ||
+  var isLocalhost = Boolean(
+    window.location.hostname === 'localhost' ||
       // [::1] is the IPv6 localhost address.
       window.location.hostname === '[::1]' ||
       // 127.0.0.1/8 is considered localhost for IPv4.
-      window.location.hostname.match(
-        /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
-      )
-    );
+      window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+  )
 
   window.addEventListener('load', function() {
-      if ('serviceWorker' in navigator &&
-          (window.location.protocol === 'https:' || isLocalhost)) {
-        navigator.serviceWorker.register('service-worker.js')
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || isLocalhost)) {
+      navigator.serviceWorker
+        .register('service-worker.js')
         .then(function(registration) {
           // updatefound is fired if service-worker.js changes.
           registration.onupdatefound = function() {
@@ -26,7 +25,7 @@
             // i.e. whether there's an existing service worker.
             if (navigator.serviceWorker.controller) {
               // The updatefound event implies that registration.installing is set
-              var installingWorker = registration.installing;
+              var installingWorker = registration.installing
 
               installingWorker.onstatechange = function() {
                 switch (installingWorker.state) {
@@ -35,21 +34,21 @@
                     // fresh content will have been added to the cache.
                     // It's the perfect time to display a "New content is
                     // available; please refresh." message in the page's interface.
-                    break;
+                    break
 
                   case 'redundant':
-                    throw new Error('The installing ' +
-                                    'service worker became redundant.');
+                    throw new Error('The installing ' + 'service worker became redundant.')
 
                   default:
-                    // Ignore
+                  // Ignore
                 }
-              };
+              }
             }
-          };
-        }).catch(function(e) {
-          console.error('Error during service worker registration:', e);
-        });
-      }
-  });
-})();
+          }
+        })
+        .catch(function(e) {
+          console.error('Error during service worker registration:', e)
+        })
+    }
+  })
+})()
