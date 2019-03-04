@@ -8,6 +8,7 @@ import store from './store/index'
 import { sync } from 'vuex-router-sync'
 import lodash from 'lodash'
 import firebase from 'firebase/app'
+import 'firebase/messaging'
 import '../node_modules/firebaseui/dist/firebaseui.css'
 
 Object.defineProperty(Vue.prototype, '_', { value: lodash })
@@ -23,6 +24,28 @@ const apiConfig = {
 
 Vue.config.productionTip = false
 firebase.initializeApp(process.env.config)
+if (process.env.NODE_ENV === 'production') {
+  const messaging = firebase.messaging()
+  messaging.usePublicVapidKey(process.env.public_valid_key)
+  Vue.prototype.$messaging = messaging
+} else {
+  Vue.prototype.$messaging = {
+    onTokenRefresh: callback => {
+      callback()
+    },
+    getToken: () => {
+      return new Promise(function(resolve) {
+        resolve('SampleToken_' + new Date().getTime())
+      })
+    },
+    onMessage: () => {},
+    requestPermission: () => {
+      return new Promise(function(resolve) {
+        resolve('SampleToken_' + new Date().getTime())
+      })
+    }
+  }
+}
 firebase.auth().onAuthStateChanged(user => {
   console.log('onAuthStateChanged', user)
   // Make sure there is a valid user object

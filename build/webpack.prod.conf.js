@@ -139,7 +139,11 @@ const webpackConfig = merge(baseWebpackConfig, {
       staticFileGlobs: ['dist/**/*.{js,html,css}'],
       minify: true,
       stripPrefix: 'dist/'
-    })
+    }),
+    new CopyWebpackPlugin([{
+      from: path.resolve(__dirname, '../static/firebase-messaging-sw.js'),
+      to: 'firebase-messaging-sw.js',
+    }])
   ]
 })
 
