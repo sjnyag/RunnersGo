@@ -1,6 +1,8 @@
 <template>
-  <div class="hello">
-    <img :src="image">
+  <div>
+    <template v-if="token"></template>
+    <img :src="localProfile.getImageUrl()">
+    <p>{{notification}}</p>
     <template v-for="(session, index) in sessions">
       <session :key="'session_'+index" :session="session"></session>
     </template>
@@ -11,6 +13,8 @@ import Session from './Session'
 import moment from 'moment'
 
 import firebase from 'firebase/app'
+import 'firebase/messaging'
+
 require('firebase/firestore')
 export default {
   name: 'Home',
@@ -18,51 +22,100 @@ export default {
     Session
   },
   data() {
-    return {
-      sessions: [],
-      signedIn: true,
-      image: 'https://picsum.photos/96/96'
-    }
-  },
-  mounted() {
     const profile = window.gapi.auth2
       .getAuthInstance()
       .currentUser.get()
       .getBasicProfile()
-    const id = profile.getId()
-    const image = profile.getImageUrl()
-    window.firebase = firebase
-    window.db = firebase.firestore()
-    window.db
-      .collection('users')
-      .doc(id)
-      .set(
-        {
-          image: image
-        },
-        { merge: true }
-      )
-      .catch(error => {
-        console.error('Error adding document: ', error)
-      })
-
-    window.db
-      .collection('users')
-      .doc(id)
-      .get()
-      .then(doc => {
-        if (doc.exists) {
-          this.image = doc.data().image
-        } else {
-          console.log('No such document!')
-        }
-      })
-      .catch(function(error) {
-        console.log('Error getting document:', error)
-      })
+    return {
+      sessions: [],
+      signedIn: true,
+      image: 'https://picsum.photos/96/96',
+      token: '',
+      localProfile: profile,
+      remoteProfile: null,
+      notification: null
+    }
+  },
+  mounted() {
+    this.initFCM()
+    this.registeFCM()
     // this.execApi()
   },
   methods: {
+    initFCM() {
+      this.$messaging.onTokenRefresh(() => {
+        this.getToken()
+      })
+      this.$messaging.onMessage(payload => {
+        console.log('Message receiver ', payload)
+        this.notification = payload.notification
+        console.log('Notification: ', this.notification)
+      })
+    },
+    registeFCM() {
+      this.$messaging
+        .requestPermission()
+        .then(() => {
+          console.log('Notification permission granted.')
+          this.getToken()
+        })
+        .catch(err => {
+          console.log('Unable to get permission to notify.', err)
+        })
+    },
+    getToken() {
+      this.$messaging
+        .getToken()
+        .then(currentToken => {
+          if (currentToken) {
+            this.setTokenSentToServer(false)
+            this.sendTokenToServer(currentToken)
+          } else {
+            console.log('No Instance ID token available. Request permission to generate one.')
+            this.setTokenSentToServer(false)
+          }
+        })
+        .catch(err => {
+          console.log('An error occurred while retrieving token. ', err)
+          this.setTokenSentToServer(false)
+        })
+    },
+    sendTokenToServer(token) {
+      this.updateUserProfile({ token: token })
+    },
+    setTokenSentToServer(type) {
+      // if (type) return
+      // TODO: Delete Register Token From Your Server
+    },
+    updateUserProfile(data) {
+      const id = this.localProfile.getId()
+      firebase
+        .firestore()
+        .collection('users')
+        .doc(id)
+        .set(data, { merge: true })
+        .catch(error => {
+          console.error('Error adding document: ', error)
+        })
+    },
+    readUserProfile() {
+      const id = this.localProfile.getId()
+      firebase
+        .firestore()
+        .collection('users')
+        .doc(id)
+        .get()
+        .then(doc => {
+          if (doc.exists) {
+            this.remoteProfile = doc.data()
+          } else {
+            console.log('No such document!')
+          }
+        })
+        .catch(function(error) {
+          console.log('Error getting document:', error)
+        })
+    },
     execApi() {
       window.gapi.client.fitness.users.dataSources.datasets
         .get({
