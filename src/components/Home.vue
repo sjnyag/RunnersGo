@@ -1,7 +1,7 @@
 <template>
   <div>
     <template v-if="token"></template>
-    <img :src="localProfile.getImageUrl()">
+    <img :src="profile.picture" v-if="profile">
     <p>{{notification}}</p>
     <template v-for="(session, index) in sessions">
       <session :key="'session_'+index" :session="session"></session>
@@ -11,35 +11,35 @@
 <script>
 import Session from './Session'
 import moment from 'moment'
-
 import firebase from 'firebase/app'
+import { mapState } from 'vuex'
 import 'firebase/messaging'
+import 'firebase/firestore'
 
-require('firebase/firestore')
 export default {
   name: 'Home',
   components: {
     Session
   },
   data() {
-    const profile = window.gapi.auth2
-      .getAuthInstance()
-      .currentUser.get()
-      .getBasicProfile()
     return {
       sessions: [],
       signedIn: true,
       image: 'https://picsum.photos/96/96',
       token: '',
-      localProfile: profile,
       remoteProfile: null,
       notification: null
     }
   },
+  computed: {
+    ...mapState({
+      profile: state => state.auth.profile
+    })
+  },
   mounted() {
     this.initFCM()
     this.registeFCM()
-    // this.execApi()
+    this.execApi()
   },
   methods: {
     initFCM() {
@@ -88,7 +88,7 @@ export default {
       // TODO: Delete Register Token From Your Server
     },
     updateUserProfile(data) {
-      const id = this.localProfile.getId()
+      const id = this.profile.id
       firebase
         .firestore()
         .collection('users')
@@ -99,7 +99,7 @@ export default {
         })
     },
     readUserProfile() {
-      const id = this.localProfile.getId()
+      const id = this.profile.id
       firebase
         .firestore()
         .collection('users')
