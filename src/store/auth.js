@@ -110,7 +110,7 @@ const actions = {
           axios
             .post(process.env.cloud_function_base_url + 'exchangeToken', {
               code: state.authorization.code,
-              redirect_uri: 'http://sjnya.com:8080'
+              redirect_uri: location.origin
             })
             .then(response => {
               console.log(response)
