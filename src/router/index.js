@@ -39,22 +39,27 @@ const router = new Router({
 router.beforeEach((to, from, next) => {
   console.log('Routing to...' + to.name)
   console.log(store.state)
-  if (to.name === 'Top' || to.name === 'Login') {
-    next()
-  } else {
-    if (!store.state.auth.signedIn) {
-      next('/')
-    } else if (!store.state.auth.clientInitialized) {
-      store.dispatch('auth/initGapi').then(() => {
-        if (!store.state.auth.signedIn) {
-          next('/')
-        } else {
-          next()
-        }
-      })
+  const loginStateRouter = () => {
+    if (store.state.auth.signedIn) {
+      if (to.name === 'Top' || to.name === 'Login') {
+        next('/home')
+      } else {
+        next()
+      }
     } else {
-      next()
+      if (to.name !== 'Login') {
+        next('/login')
+      } else {
+        next()
+      }
     }
+  }
+  if (to.name === from.name) {
+    next()
+  } else if (!store.state.auth.clientInitialized) {
+    store.dispatch('auth/initGapi').then(loginStateRouter)
+  } else {
+    loginStateRouter()
   }
 })
 export default router
