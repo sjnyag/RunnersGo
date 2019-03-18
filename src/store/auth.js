@@ -96,28 +96,6 @@ const actions = {
         })
     })
   },
-  isSignedIn({ dispatch, state }) {
-    console.log('check if signed in...')
-    return new Promise((resolve, reject) => {
-      dispatch('initGapi')
-        .then(() => {
-          if (state.signedIn) {
-            console.log('check if signed in... Yes')
-            dispatch('setToken').then(() => {
-              resolve()
-            })
-          } else {
-            console.log('check if signed in... No')
-            resolve(false)
-          }
-        })
-        .catch(err => {
-          dispatch('signOut').then(() => {
-            reject(err)
-          })
-        })
-    })
-  },
   signIn({ state, dispatch, commit }) {
     console.log('signing in...')
     return new Promise((resolve, reject) => {
