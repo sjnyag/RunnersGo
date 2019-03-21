@@ -29,23 +29,35 @@
     />
     <% }}} %>
     <script src="https://apis.google.com/js/platform.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=M+PLUS+1p" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <style>
+      * {
+        font-family: 'M PLUS 1p';
+      }
+      footer {
+        bottom: 0px;
+        right: 0px;
+        position: fixed;
+      }
+    </style>
   </head>
   <body style="margin: 0;">
     <noscript>
       This is your fallback content in case JavaScript fails to load.
     </noscript>
     <div id="header"></div>
-    <div style="padding-top: 64px;"><div id="app"></div></div>
+    <div id="app"></div>
     <!-- Todo: only include in production -->
     <%= htmlWebpackPlugin.options.serviceWorkerLoader %>
     <!-- built files will be auto injected -->
   </body>
   <footer>
     <div>
-      Icons made by <a href="https://www.freepik.com/" title="Freepik">Freepik</a> from
+      <p>Icons made by <a href="https://www.freepik.com/" title="Freepik">Freepik</a> from
       <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by
-      <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a>
+      <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></p>
+      <p><a href="https://pixabay.com/ja/users/darksouls1-2189876/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1985664">Enrique Meseguer</a>による<a href="https://pixabay.com/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1985664">Pixabay</a>からの画像</p>
     </div>
   </footer>
 </html>
