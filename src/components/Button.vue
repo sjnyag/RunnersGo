@@ -31,19 +31,17 @@ button {
     }
   }
   background-color: $color;
-  box-shadow: 0 6px $shadowColor;
+  box-shadow: 0 3px $shadowColor;
   &:hover {
-    box-shadow: 0 5px $shadowColor;
+    box-shadow: 0 2px $shadowColor;
     top: 1px;
   }
   &:active {
     background-color: $activeColor;
     box-shadow: 0 0 $shadowColor;
-    top: 6px;
+    top: 3px;
   }
-  &:focus {
-    outline: none;
-  }
+  outline: none;
   padding: 0.5em 2em;
   border: none;
   display: inline-block;
@@ -53,7 +51,7 @@ button {
   position: relative;
   border-radius: 0.5em;
   top: 0;
-  transition: 0.2s box-shadow, 0.2s top, 0.4s background;
+  transition: 0.1s box-shadow, 0.1s top, 0.2s background;
   cursor: pointer;
 }
 </style>

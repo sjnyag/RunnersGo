@@ -4,6 +4,7 @@ import Vue from 'vue'
 import App from './App'
 import Header from './Header'
 import router from './router'
+import VueLazyload from 'vue-lazyload'
 import store from './store/index'
 import { sync } from 'vuex-router-sync'
 import lodash from 'lodash'
@@ -13,6 +14,8 @@ import 'firebase/messaging'
 Object.defineProperty(Vue.prototype, '_', { value: lodash })
 
 sync(store, router)
+
+Vue.use(VueLazyload)
 
 Vue.config.productionTip = false
 firebase.initializeApp(process.env.config)
