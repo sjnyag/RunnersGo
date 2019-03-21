@@ -14,6 +14,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "@material/layout-grid": "^0.41.0",
     "axios": "^0.16.2",
     "firebase": "^5.8.3",
     "lodash": "^4.17.11",

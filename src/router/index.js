@@ -14,7 +14,8 @@ const router = new Router({
       name: 'Top',
       component: Top,
       meta: {
-        title: ''
+        title: '',
+        hideHeader: true
       }
     },
     {
@@ -22,7 +23,8 @@ const router = new Router({
       name: 'Login',
       component: Login,
       meta: {
-        title: 'Login'
+        title: 'Login',
+        hideHeader: true
       }
     },
     {
