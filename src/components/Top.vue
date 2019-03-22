@@ -1,5 +1,6 @@
 <template>
   <div class="page mdc-layout-grid" v-lazy:background-image="backgroundImage">
+    <full-screen-loader v-if="loading"></full-screen-loader>
     <div class="base mdc-layout-grid__inner">
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12 title-row">
         <h1 class="title">Runners GO</h1>
@@ -16,10 +17,12 @@
 <script>
 import { mapActions, mapState } from 'vuex'
 import FlatButton from './Button'
+import FullScreenLoader from './FullScreenLoader'
 export default {
   name: 'Top',
   components: {
-    FlatButton
+    FlatButton,
+    FullScreenLoader
   },
   data() {
     return {
@@ -28,7 +31,8 @@ export default {
       },
       iconImage: {
         src: './static/img/icons/android-chrome-512x512.png'
-      }
+      },
+      loading: false
     }
   },
   computed: {
@@ -38,12 +42,17 @@ export default {
   },
   methods: {
     start() {
+      this.loading = true
       if (this.signedIn) {
         this.$router.push('/home')
       } else {
-        this.signIn().then(() => {
-          this.$router.push('/home')
-        })
+        this.signIn()
+          .then(() => {
+            this.$router.push('/home')
+          })
+          .catch(() => {
+            this.loading = false
+          })
       }
     },
     ...mapActions('auth', ['signIn'])
