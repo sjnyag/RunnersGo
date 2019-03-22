@@ -11,7 +11,7 @@ export default new Vuex.Store({
   },
   plugins: [
     createPersistedState({
-      paths: ['auth.profile']
+      paths: ['auth.profile', 'auth.signedIn', 'auth.authorization']
     })
   ]
 })

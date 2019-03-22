@@ -16,6 +16,7 @@ exports.cssLoaders = function(options) {
   const cssLoader = {
     loader: 'css-loader',
     options: {
+      minimize: process.env.NODE_ENV === 'production',
       sourceMap: options.sourceMap
     }
   }
@@ -93,7 +94,7 @@ exports.createNotifierCallback = () => {
       title: packageConfig.name,
       message: severity + ': ' + error.name,
       subtitle: filename || '',
-      icon: path.join(__dirname, 'logo.png')
+      icon: path.join(__dirname, '../static/logo.svg')
     })
   }
 }

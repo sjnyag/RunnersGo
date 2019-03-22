@@ -1,8 +1,8 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Top from '@/components/Top'
-import Login from '@/components/Login'
 import Home from '@/components/Home'
+import store from '../store/index'
 
 Vue.use(Router)
 
@@ -13,15 +13,8 @@ const router = new Router({
       name: 'Top',
       component: Top,
       meta: {
-        title: ''
-      }
-    },
-    {
-      path: '/login',
-      name: 'Login',
-      component: Login,
-      meta: {
-        title: 'Login'
+        title: '',
+        hideHeader: true
       }
     },
     {
@@ -36,14 +29,21 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name === 'Top' || to.name === 'Login') {
-    next()
-  } else {
-    if (!window.gapi) {
-      next('/')
-    } else {
+  console.log('Routing to...' + to.name)
+  console.log(store.state)
+  const loginStateRouter = () => {
+    if (store.state.auth.signedIn || to.name === 'Top') {
       next()
+    } else {
+      next('/')
     }
+  }
+  if (to.name === from.name) {
+    next()
+  } else if (!store.state.auth.clientInitialized) {
+    store.dispatch('auth/initGapi').then(loginStateRouter)
+  } else {
+    loginStateRouter()
   }
 })
 export default router

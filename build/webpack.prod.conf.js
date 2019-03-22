@@ -1,4 +1,5 @@
 'use strict'
+const fs = require('fs')
 const path = require('path')
 const utils = require('./utils')
 const webpack = require('webpack')
@@ -9,6 +10,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
+const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin')
+const loadMinified = require('./load-minified')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const env = process.env.NODE_ENV === 'testing'
@@ -43,6 +46,12 @@ const webpackConfig = merge(baseWebpackConfig, {
       sourceMap: config.build.productionSourceMap,
       parallel: true
     }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      },
+      sourceMap: true
+    }),
     // extract css into its own file
     new ExtractTextPlugin({
       filename: utils.assetsPath('css/[name].[contenthash].css'),
@@ -76,7 +85,9 @@ const webpackConfig = merge(baseWebpackConfig, {
         // https://github.com/kangax/html-minifier#options-quick-reference
       },
       // necessary to consistently work with multiple chunks via CommonsChunkPlugin
-      chunksSortMode: 'dependency'
+      chunksSortMode: 'dependency',
+      serviceWorkerLoader: `<script>${loadMinified(path.join(__dirname,
+        './service-worker-prod.js'))}</script>`
     }),
     // keep module.id stable when vendor modules does not change
     new webpack.HashedModuleIdsPlugin(),
@@ -100,7 +111,8 @@ const webpackConfig = merge(baseWebpackConfig, {
     // prevent vendor hash from being updated whenever app bundle is updated
     new webpack.optimize.CommonsChunkPlugin({
       name: 'manifest',
-      minChunks: Infinity
+      minChunks: Infinity,
+      chunks: ['vendor']
     }),
     // This instance extracts shared chunks from code splitted chunks and bundles them
     // in a separate chunk, similar to the vendor chunk
@@ -119,7 +131,19 @@ const webpackConfig = merge(baseWebpackConfig, {
         to: config.build.assetsSubDirectory,
         ignore: ['.*']
       }
-    ])
+    ]),
+    // service worker caching
+    new SWPrecacheWebpackPlugin({
+      cacheId: 'runners_go',
+      filename: 'service-worker.js',
+      staticFileGlobs: ['dist/**/*.{js,html,css}'],
+      minify: true,
+      stripPrefix: 'dist/'
+    }),
+    new CopyWebpackPlugin([{
+      from: path.resolve(__dirname, '../static/firebase-messaging-sw.js'),
+      to: 'firebase-messaging-sw.js',
+    }])
   ]
 })
 
