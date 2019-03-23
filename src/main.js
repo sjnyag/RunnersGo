@@ -18,7 +18,7 @@ sync(store, router)
 Vue.use(VueLazyload)
 
 Vue.config.productionTip = false
-firebase.initializeApp(process.env.config)
+firebase.initializeApp({...process.env.config, apiKey: process.env.API_KEY})
 if (process.env.NODE_ENV === 'production') {
   const messaging = firebase.messaging()
   messaging.usePublicVapidKey(process.env.public_valid_key)

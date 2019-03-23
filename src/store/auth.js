@@ -9,7 +9,7 @@ const state = {
 }
 
 const apiInitConfig = {
-  apiKey: process.env.config.apiKey,
+  apiKey: process.env.API_KEY,
   discoveryDocs: process.env.config.discoveryDocs
 }
 

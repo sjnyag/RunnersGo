@@ -16,6 +16,7 @@
   "dependencies": {
     "@material/layout-grid": "^0.41.0",
     "axios": "^0.16.2",
+    "dotenv-webpack": "^1.7.0",
     "firebase": "^5.8.3",
     "lodash": "^4.17.11",
     "material-components-web": "^0.44.0",
