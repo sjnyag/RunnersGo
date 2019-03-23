@@ -14,7 +14,8 @@ const router = new Router({
       component: Top,
       meta: {
         title: '',
-        hideHeader: true
+        hideHeader: true,
+        hideFooter: true
       }
     },
     {

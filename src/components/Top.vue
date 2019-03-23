@@ -83,6 +83,11 @@ div.page {
     z-index: -1;
   }
   div.base {
+    position: absolute;
+    width: 100vw;
+    top: 40%;
+    transform: translateY(-40%);
+    -webkit-transform: translateY(-40%);
     div.mdc-layout-grid__cell {
       justify-self: center;
       align-self: center;
