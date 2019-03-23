@@ -2,7 +2,6 @@
 module.exports = {
   NODE_ENV: '"production"',
   config: `{
-    apiKey: 'AIzaSyAVPEQgNlxFB9VlnI6HQ0sY-XW_E6Gca0g',
     authDomain: 'runnersgo.firebaseapp.com',
     databaseURL: 'https://runnersgo.firebaseio.com',
     projectId: 'runnersgo',
