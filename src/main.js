@@ -3,6 +3,7 @@
 import Vue from 'vue'
 import App from './App'
 import Header from './Header'
+import Footer from './Footer'
 import router from './router'
 import VueLazyload from 'vue-lazyload'
 import store from './store/index'
@@ -58,4 +59,13 @@ new Vue({
   store,
   components: { Header },
   template: '<Header/>'
+})
+
+/* eslint-disable no-new */
+new Vue({
+  el: '#footer',
+  router,
+  store,
+  components: { Footer },
+  template: '<Footer/>'
 })
