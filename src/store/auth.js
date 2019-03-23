@@ -1,5 +1,7 @@
 import api from '../api'
 import axios from 'axios'
+import firebase from 'firebase/app'
+import 'firebase/auth'
 
 const state = {
   signedIn: false,
@@ -82,7 +84,7 @@ const actions = {
     console.log('refreshing token...')
     return new Promise((resolve, reject) => {
       axios
-        .post(process.env.cloud_function_base_url + 'refreshToken', {
+        .post(process.env.cloud_function_base_url + 'refreshGapiToken', {
           refresh_token: state.authorization.refresh_token
         })
         .then(response => {
@@ -96,19 +98,44 @@ const actions = {
         })
     })
   },
-  signIn({ state, dispatch, commit }) {
-    console.log('signing in...')
+  signInByFirebase({ state }) {
+    console.log('signing in by firebase...')
+    return new Promise((resolve, reject) => {
+      axios
+        .post(process.env.cloud_function_base_url + 'createCustomToken', { uid: state.profile.id })
+        .then(response => {
+          console.log(response)
+          firebase
+            .auth()
+            .signInWithCustomToken(response.data.customToken)
+            .then(() => {
+              console.log('signing in by firebase... success')
+              resolve()
+            })
+            .catch(error => {
+              console.log('signing in by firebase... error')
+              console.log(error)
+              reject(new Error(error))
+            })
+        })
+        .catch(err => {
+          reject(err)
+        })
+    })
+  },
+  signInByGoogleAuth({ state, dispatch, commit }) {
+    console.log('signing in by google auth...')
     return new Promise((resolve, reject) => {
       dispatch('initGapi').then(() => {
         window.gapi.auth2.authorize(apiAuthConfig, response => {
           if (response.error) {
-            console.log('signing in... error')
+            console.log('signing in by google auth... error')
             reject(new Error(response.error))
             return
           }
           commit('authorize', response)
           axios
-            .post(process.env.cloud_function_base_url + 'exchangeToken', {
+            .post(process.env.cloud_function_base_url + 'exchangeGapiToken', {
               code: state.authorization.code,
               redirect_uri: location.origin
             })
@@ -120,11 +147,11 @@ const actions = {
                 dispatch('verifyToken')
                   .then(profile => {
                     commit('signIn', profile)
-                    console.log('signing in... success')
+                    console.log('signing in by google auth... success')
                     resolve()
                   })
                   .catch(err => {
-                    console.log('signing in... error')
+                    console.log('signing in by google auth... error')
                     dispatch('signOut').then(() => {
                       reject(err)
                     })
@@ -137,6 +164,30 @@ const actions = {
             })
         })
       })
+    })
+  },
+  signIn({ dispatch }) {
+    console.log('signing in...')
+    return new Promise((resolve, reject) => {
+      dispatch('signInByGoogleAuth')
+        .then(() => {
+          dispatch('signInByFirebase')
+            .then(() => {
+              resolve()
+            })
+            .catch(err => {
+              console.log(err)
+              dispatch('signOut').then(() => {
+                reject(err)
+              })
+            })
+        })
+        .catch(err => {
+          console.log(err)
+          dispatch('signOut').then(() => {
+            reject(err)
+          })
+        })
     })
   },
   signOut({ commit }) {
