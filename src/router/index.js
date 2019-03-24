@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Top from '@/components/Top'
 import Home from '@/components/Home'
+import History from '@/components/History'
 import store from '../store/index'
 
 Vue.use(Router)
@@ -24,6 +25,14 @@ const router = new Router({
       component: Home,
       meta: {
         title: 'Home'
+      }
+    },
+    {
+      path: '/history',
+      name: 'History',
+      component: History,
+      meta: {
+        title: 'History'
       }
     }
   ]

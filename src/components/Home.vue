@@ -1,16 +1,9 @@
 <template>
   <div>
-    <template v-if="token"></template>
     <img :src="profile.picture" v-if="profile">
-    <p>{{notification}}</p>
-    <template v-for="(session, index) in sessions">
-      <session :key="'session_'+index" :session="session"></session>
-    </template>
   </div>
 </template>
 <script>
-import Session from './Session'
-import moment from 'moment'
 import firebase from 'firebase/app'
 import { mapState } from 'vuex'
 import 'firebase/messaging'
@@ -18,19 +11,6 @@ import 'firebase/firestore'
 
 export default {
   name: 'Home',
-  components: {
-    Session
-  },
-  data() {
-    return {
-      sessions: [],
-      signedIn: true,
-      image: 'https://picsum.photos/96/96',
-      token: '',
-      remoteProfile: null,
-      notification: null
-    }
-  },
   computed: {
     ...mapState({
       profile: state => state.auth.profile
@@ -39,7 +19,6 @@ export default {
   mounted() {
     this.initFCM()
     this.registeFCM()
-    this.execApi()
   },
   methods: {
     initFCM() {
@@ -48,8 +27,7 @@ export default {
       })
       this.$messaging.onMessage(payload => {
         console.log('Message receiver ', payload)
-        this.notification = payload.notification
-        console.log('Notification: ', this.notification)
+        console.log('Notification: ', payload.notification)
       })
     },
     registeFCM() {
@@ -107,7 +85,6 @@ export default {
         .get()
         .then(doc => {
           if (doc.exists) {
-            this.remoteProfile = doc.data()
           } else {
             console.log('No such document!')
           }
@@ -115,45 +92,6 @@ export default {
         .catch(function(error) {
           console.log('Error getting document:', error)
         })
-    },
-    execApi() {
-      window.gapi.client.fitness.users.dataSources.datasets
-        .get({
-          userId: 'me',
-          dataSourceId: 'derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes',
-          datasetId: this.lastWeek().unix() * 1000 * 1000 * 1000 + '-' + moment().unix() * 1000 * 1000 * 1000
-        })
-        .then(
-          response => {
-            const isContinuous = function(before, after) {
-              return (after - before) / (1000 * 1000 * 1000) < 15 * 60
-            }
-            const isWorkout = function(summary) {
-              return (summary.endTimeNanos - summary.startTimeNanos) / (1000 * 1000 * 1000) > 5 * 60
-            }
-            let before = 0
-            const result = []
-            response.result.point.forEach(point => {
-              if (isContinuous(before, point.startTimeNanos)) {
-                this._.last(result).summary.endTimeNanos = point.endTimeNanos
-              } else {
-                point.summary = {
-                  startTimeNanos: point.startTimeNanos,
-                  endTimeNanos: point.endTimeNanos
-                }
-                result.push(point)
-              }
-              before = point.endTimeNanos
-            })
-            this.sessions = this._.reverse(this._.filter(result, point => isWorkout(point.summary)))
-          },
-          reason => {
-            console.log('Error: ' + reason.result.error.message)
-          }
-        )
-    },
-    lastWeek: function() {
-      return moment(new Date()).subtract(7, 'days')
     }
   }
 }
