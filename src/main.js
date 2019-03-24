@@ -5,12 +5,10 @@ import App from './App'
 import Header from './Header'
 import Footer from './Footer'
 import router from './router'
-import VueLazyload from 'vue-lazyload'
-import store from './store/index'
 import { sync } from 'vuex-router-sync'
+import store from './store/index'
 import lodash from 'lodash'
-import firebase from 'firebase/app'
-import 'firebase/messaging'
+import VueLazyload from 'vue-lazyload'
 
 Object.defineProperty(Vue.prototype, '_', { value: lodash })
 
@@ -19,29 +17,6 @@ sync(store, router)
 Vue.use(VueLazyload)
 
 Vue.config.productionTip = false
-firebase.initializeApp({...process.env.config, apiKey: process.env.API_KEY})
-if (process.env.NODE_ENV === 'production') {
-  const messaging = firebase.messaging()
-  messaging.usePublicVapidKey(process.env.public_valid_key)
-  Vue.prototype.$messaging = messaging
-} else {
-  Vue.prototype.$messaging = {
-    onTokenRefresh: callback => {
-      callback()
-    },
-    getToken: () => {
-      return new Promise(function(resolve) {
-        resolve('SampleToken_' + new Date().getTime())
-      })
-    },
-    onMessage: () => {},
-    requestPermission: () => {
-      return new Promise(function(resolve) {
-        resolve('SampleToken_' + new Date().getTime())
-      })
-    }
-  }
-}
 
 /* eslint-disable no-new */
 new Vue({

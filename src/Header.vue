@@ -20,13 +20,18 @@ export default {
     }
   },
   mounted: function() {
-    this.title = this.$route.meta.title
+    this.setUpHeader()
     // Instantiation
     // const topAppBarElement = document.querySelector('.mdc-top-app-bar')
     // const topAppBar = new MDCTopAppBar(topAppBarElement)
   },
   watch: {
     $route() {
+      this.setUpHeader()
+    }
+  },
+  methods: {
+    setUpHeader() {
       this.title = this.$route.meta.title
       if (this.$route.meta.hideHeader) {
         this.showHeader = false

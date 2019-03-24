@@ -9,6 +9,7 @@
 </template>
 <script>
 import moment from 'moment'
+import { mapActions } from 'vuex'
 export default {
   name: 'Session',
   props: {
@@ -29,15 +30,10 @@ export default {
   },
   computed: {
     sessionStartTime: function() {
-      return this.nanoStringToMoment(
-        this.session.summary.startTimeNanos
-      ).subtract(2, 'minutes')
+      return this.nanoStringToMoment(this.session.summary.startTimeNanos).subtract(2, 'minutes')
     },
     sessionEndTime: function() {
-      return this.nanoStringToMoment(this.session.summary.endTimeNanos).add(
-        2,
-        'minutes'
-      )
+      return this.nanoStringToMoment(this.session.summary.endTimeNanos).add(2, 'minutes')
     },
     aggregateRequest: function() {
       return {
@@ -92,50 +88,31 @@ export default {
       //   )
     },
     calcDetail() {
-      window.gapi.client.fitness.users.dataset
-        .aggregate(this.aggregateRequest)
-        .then(
-          response => {
-            if (response.result.bucket.length === 0) {
-              return
+      this.aggregateFitnessDataSet(this.aggregateRequest).then(response => {
+        if (response.result.bucket.length === 0) {
+          return
+        }
+        this._.each(response.result.bucket, bucket => {
+          if (bucket.dataset[0].point.length > 0) {
+            if (this.startTime === null) {
+              this.startTime = this.nanoStringToMoment(bucket.dataset[0].point[0].startTimeNanos)
             }
-            this._.each(response.result.bucket, bucket => {
-              if (bucket.dataset[0].point.length > 0) {
-                if (this.startTime === null) {
-                  this.startTime = this.nanoStringToMoment(
-                    bucket.dataset[0].point[0].startTimeNanos
-                  )
-                }
-                this.endTime = this.nanoStringToMoment(
-                  bucket.dataset[0].point[0].endTimeNanos
-                )
-                this.distance += bucket.dataset[0].point[0].value[0].fpVal
-              }
-              if (bucket.dataset[1].point.length > 0) {
-                if (this.startTime === null) {
-                  this.startTime = this.nanoStringToMoment(
-                    bucket.dataset[1].point[0].startTimeNanos
-                  )
-                }
-                this.endTime = this.nanoStringToMoment(
-                  bucket.dataset[1].point[0].endTimeNanos
-                )
-                this.stepCount += bucket.dataset[1].point[0].value[0].intVal
-              }
-            })
-            this.stepCount = Math.round(this.stepCount)
-            this.distance = Math.round(this.distance)
-            this.period = this.calcPeriod(this.startTime, this.endTime)
-            this.elapsedTime = this.calcElapsedTime(
-              this.startTime,
-              this.endTime
-            )
-            // this.calcSpeed()
-          },
-          reason => {
-            console.log('Error: ' + reason.result.error.message)
+            this.endTime = this.nanoStringToMoment(bucket.dataset[0].point[0].endTimeNanos)
+            this.distance += bucket.dataset[0].point[0].value[0].fpVal
           }
-        )
+          if (bucket.dataset[1].point.length > 0) {
+            if (this.startTime === null) {
+              this.startTime = this.nanoStringToMoment(bucket.dataset[1].point[0].startTimeNanos)
+            }
+            this.endTime = this.nanoStringToMoment(bucket.dataset[1].point[0].endTimeNanos)
+            this.stepCount += bucket.dataset[1].point[0].value[0].intVal
+          }
+        })
+        this.stepCount = Math.round(this.stepCount)
+        this.distance = Math.round(this.distance)
+        this.period = this.calcPeriod(this.startTime, this.endTime)
+        this.elapsedTime = this.calcElapsedTime(this.startTime, this.endTime)
+      })
     },
     calcPeriod: function(start, end) {
       return this.formatDate(start) + '~' + this.formatDate(end)
@@ -154,7 +131,8 @@ export default {
     },
     nanoStringToMoment(nano) {
       return moment(new Date(parseInt(nano) / 1000000))
-    }
+    },
+    ...mapActions('google', ['aggregateFitnessDataSet'])
   }
 }
 </script>
