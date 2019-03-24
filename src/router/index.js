@@ -41,19 +41,16 @@ const router = new Router({
 router.beforeEach((to, from, next) => {
   console.log('Routing to...' + to.name)
   console.log(store.state)
-  const loginStateRouter = () => {
-    if (store.state.auth.signedIn || to.name === 'Top') {
-      next()
-    } else {
-      next('/')
-    }
+  if (!store.state.firebase.tokenSentToServer && store.state.auth.profile.id) {
+    store.dispatch('firebase/requestMessagingPermission')
   }
   if (to.name === from.name) {
     next()
-  } else if (!store.state.auth.clientInitialized) {
-    store.dispatch('auth/initGapi').then(loginStateRouter)
+  } else if (store.state.auth.signedIn || to.name === 'Top') {
+    next()
   } else {
-    loginStateRouter()
+    console.log('Redirect to...Top')
+    next('/')
   }
 })
 export default router

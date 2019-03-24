@@ -65,6 +65,7 @@ $blur: 2px;
 div.page {
   width: 100vw;
   height: 100vh;
+  padding: 0;
   background-position: center center;
   background-repeat: no-repeat;
   background-attachment: fixed;
