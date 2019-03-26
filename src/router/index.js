@@ -41,7 +41,7 @@ const router = new Router({
 router.beforeEach((to, from, next) => {
   console.log('Routing to...' + to.name)
   console.log(store.state)
-  if (!store.state.firebase.tokenSentToServer && store.state.auth.profile.id) {
+  if (!store.state.firebase.tokenSentToServer && store.state.auth.profile && store.state.auth.profile.id) {
     store.dispatch('firebase/requestMessagingPermission')
   }
   if (to.name === from.name) {
