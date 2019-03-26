@@ -61,7 +61,6 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import '@material/layout-grid/mdc-layout-grid.scss';
-$blur: 2px;
 div.page {
   width: 100vw;
   height: 100vh;
