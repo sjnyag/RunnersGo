@@ -23,7 +23,7 @@
         <flat-button @onclick="start" name="フレンドリスト" color="green"></flat-button>
       </div>
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
-        <flat-button @onclick="start" name="デイリーガチャ" color="green"></flat-button>
+        <flat-button @onclick="summon" name="デイリーガチャ" color="green"></flat-button>
       </div>
     </div>
   </div>
@@ -44,6 +44,9 @@ export default {
   methods: {
     start: function() {
       this.$router.push('/history')
+    },
+    summon: function() {
+      this.$router.push('/summon')
     }
   }
 }
