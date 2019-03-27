@@ -68,7 +68,7 @@ const actions = {
   registerMessagingToken({ dispatch, rootState, commit }) {
     console.log('register messaging token...')
     return new Promise((resolve, reject) => {
-      if (!rootState.auth.profile.id) {
+      if (!rootState.auth.authentication.id) {
         console.log('register messaging token... skip')
         resolve()
       } else {
@@ -79,7 +79,7 @@ const actions = {
             .then(currentToken => {
               if (currentToken) {
                 commit('setTokenSentToServer', false)
-                dispatch('sendTokenToServer', currentToken).then(() => {
+                dispatch('sendMessageTokenToServer', currentToken).then(() => {
                   console.log('register messaging token... success')
                   resolve()
                 })
@@ -98,18 +98,19 @@ const actions = {
       }
     })
   },
-  sendTokenToServer({ dispatch, rootState, commit }, currentToken) {
-    console.log('upload messaging token...')
+  save({ dispatch, rootState }, data) {
+    console.log('firebase data saving...')
     return new Promise((resolve, reject) => {
       dispatch('initialize').then(() => {
         firebase
           .firestore()
           .collection('users')
-          .doc(rootState.auth.profile.id)
-          .set({ token: currentToken }, { merge: true })
+          .doc(rootState.auth.authentication.id)
+          .collection(data.name)
+          .doc(data.doc)
+          .set(data.data, { merge: true })
           .then(() => {
-            console.log('upload messaging token... success')
-            commit('setTokenSentToServer', true)
+            console.log('firebase data saving... success')
             resolve()
           })
           .catch(error => {
@@ -117,6 +118,35 @@ const actions = {
             reject(error)
           })
       })
+    })
+  },
+  saveGameData({ dispatch }, data) {
+    return new Promise(resolve => {
+      dispatch('save', { ...data, name: 'gameData' }).then(() => {
+        resolve()
+      })
+    })
+  },
+  saveAuthenticationData({ dispatch }, data) {
+    return new Promise(resolve => {
+      dispatch('save', { ...data, name: 'authentication' }).then(() => {
+        resolve()
+      })
+    })
+  },
+  sendMessageTokenToServer({ dispatch, commit }, currentToken) {
+    console.log('upload messaging token...')
+    return new Promise((resolve, reject) => {
+      dispatch('saveAuthenticationData', { doc: 'push', data: { token: currentToken } })
+        .then(() => {
+          console.log('upload messaging token... success')
+          commit('setTokenSentToServer', true)
+          resolve()
+        })
+        .catch(error => {
+          console.error('Error adding document: ', error)
+          reject(error)
+        })
     })
   },
   signIn({ dispatch }, request) {
