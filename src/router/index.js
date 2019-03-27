@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Top from '@/components/Top'
 import Home from '@/components/Home'
 import History from '@/components/History'
+import Summon from '@/components/Summon'
 import store from '../store/index'
 
 Vue.use(Router)
@@ -33,6 +34,16 @@ const router = new Router({
       component: History,
       meta: {
         title: 'History'
+      }
+    },
+    {
+      path: '/summon',
+      name: 'Summon',
+      component: Summon,
+      meta: {
+        title: 'Summon',
+        hideHeader: true,
+        hideFooter: true
       }
     }
   ]

@@ -71,6 +71,7 @@ div.page {
   background-size: cover;
   background-color: #464646;
   position: relative;
+  overflow: hidden;
   z-index: 0;
   &:before {
     content: '';
