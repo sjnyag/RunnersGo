@@ -6,6 +6,7 @@ import 'firebase/firestore'
 
 const state = {
   clientInitialized: false,
+  signedIn: false,
   tokenSentToServer: false,
   messagingInitialized: false
 }
@@ -98,7 +99,7 @@ const actions = {
       }
     })
   },
-  save({ dispatch, rootState }, data) {
+  set({ dispatch, rootState }, data) {
     console.log('firebase data saving...')
     return new Promise((resolve, reject) => {
       dispatch('initialize').then(() => {
@@ -120,16 +121,41 @@ const actions = {
       })
     })
   },
+  get({ dispatch, rootState }) {
+    console.log('firebase data reading...')
+    return new Promise((resolve, reject) => {
+      dispatch('initialize').then(() => {
+        firebase
+          .firestore()
+          .collection('users')
+          .doc(rootState.auth.authentication.id)
+          .get()
+          .then(doc => {
+            console.log('firebase data reading... success')
+            if (doc.exists) {
+              resolve(doc)
+            } else {
+              console.log('No such document!')
+              resolve(null)
+            }
+          })
+          .catch(function(error) {
+            console.log('Error getting document:', error)
+            reject(error)
+          })
+      })
+    })
+  },
   saveGameData({ dispatch }, data) {
     return new Promise(resolve => {
-      dispatch('save', { ...data, name: 'gameData' }).then(() => {
+      dispatch('set', { ...data, name: 'gameData' }).then(() => {
         resolve()
       })
     })
   },
   saveAuthenticationData({ dispatch }, data) {
     return new Promise(resolve => {
-      dispatch('save', { ...data, name: 'authentication' }).then(() => {
+      dispatch('set', { ...data, name: 'authentication' }).then(() => {
         resolve()
       })
     })
@@ -149,20 +175,81 @@ const actions = {
         })
     })
   },
-  signIn({ dispatch }, request) {
+  signIn({ dispatch, state, commit }, request) {
     console.log('signing in to firebase...')
-    return new Promise(resolve => {
-      dispatch('initialize').then(() => {
-        axios.post(process.env.cloud_function_base_url + 'createCustomToken', request).then(response => {
-          firebase
-            .auth()
-            .signInWithCustomToken(response.data.customToken)
-            .then(() => {
-              console.log('signing in to firebase... success')
-              resolve()
+    return new Promise((resolve, reject) => {
+      if (state.signedIn) {
+        console.log('signing in to firebase... skip')
+        resolve()
+      } else {
+        dispatch('initialize').then(() => {
+          axios
+            .post(process.env.cloud_function_base_url + 'createCustomToken', request)
+            .then(response => {
+              firebase
+                .auth()
+                .signInWithCustomToken(response.data.customToken)
+                .then(() => {
+                  commit('signedIn')
+                  console.log('signing in to firebase... success')
+                  resolve()
+                })
+            })
+            .catch(error => {
+              reject(error)
             })
         })
+      }
+    })
+  },
+  getCurrentIdToken({ dispatch, rootState }) {
+    console.log('getting current id token...')
+    return new Promise((resolve, reject) => {
+      dispatch('signIn', { uid: rootState.auth.authentication.id }).then(() => {
+        firebase
+          .auth()
+          .currentUser.getIdToken(true)
+          .then(idToken => {
+            console.log('getting current id token... success')
+            resolve(idToken)
+          })
+          .catch(error => {
+            console.error('Error adding document: ', error)
+            reject(error)
+          })
       })
+    })
+  },
+  execUserApi({ dispatch }, data) {
+    console.log('executing user api...')
+    return new Promise((resolve, reject) => {
+      dispatch('getCurrentIdToken').then(idToken => {
+        axios
+          .post(data.url, data.request, { headers: { Authorization: 'Bearer ' + idToken } })
+          .then(response => {
+            resolve(response)
+          })
+          .catch(err => {
+            reject(err)
+          })
+      })
+    })
+  },
+  dailySummon({ dispatch }) {
+    console.log('daily summon...')
+    return new Promise((resolve, reject) => {
+      dispatch('execUserApi', {
+        url: process.env.cloud_function_base_url + 'users/dailySummon',
+        request: {}
+      })
+        .then(result => {
+          console.log('daily summon... success')
+          resolve(result)
+        })
+        .catch(error => {
+          console.error(error)
+          reject(error)
+        })
     })
   }
 }
@@ -170,6 +257,9 @@ const actions = {
 const mutations = {
   clientInitialized(state) {
     state.clientInitialized = true
+  },
+  signedIn(state) {
+    state.signedIn = true
   },
   messagingInitialized(state) {
     state.messagingInitialized = true

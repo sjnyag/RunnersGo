@@ -16,6 +16,15 @@ const actions = {
         resolve()
       })
     })
+  },
+  dailySummon({ dispatch }) {
+    console.log('daily summon by screen...')
+    return new Promise(resolve => {
+      dispatch('firebase/dailySummon', { }, { root: true }).then(result => {
+        console.log('daily summon by screen... complete')
+        resolve(result)
+      })
+    })
   }
 }
 

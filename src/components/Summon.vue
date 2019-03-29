@@ -20,15 +20,9 @@
   </div>
 </template>
 <script>
-import { mapActions, mapState } from 'vuex'
-import FlatButton from './Button'
-import FullScreenLoader from './FullScreenLoader'
+import { mapActions } from 'vuex'
 export default {
   name: 'Top',
-  components: {
-    FlatButton,
-    FullScreenLoader
-  },
   data() {
     return {
       backgroundImage: {
@@ -39,37 +33,22 @@ export default {
       },
       magicCircuitImage: {
         src: './static/img/magic_circuit.svg'
-      },
-      loading: false
+      }
     }
   },
-  computed: {
-    ...mapState({
-      signedIn: state => state.auth.signedIn
+  mounted() {
+    this.dailySummon().then(result => {
+      console.log(result)
+    }).catch(error => {
+      console.log(error)
     })
   },
   methods: {
-    start() {
-      this.loading = true
-      if (this.signedIn) {
-        this.$router.push('/home')
-      } else {
-        this.signIn()
-          .then(() => {
-            this.$router.push('/home')
-          })
-          .catch(() => {
-            this.loading = false
-          })
-      }
-    },
-    ...mapActions('auth', ['signIn'])
+    ...mapActions('gamedata', ['dailySummon'])
   }
 }
 </script>
 <style lang="scss" scoped>
-@import '@material/layout-grid/mdc-layout-grid.scss';
-
 .round-table {
   position: absolute;
   left: 0;
