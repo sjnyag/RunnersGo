@@ -7,7 +7,8 @@
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2">{{profile.name}}</div>
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2">クラス：{{profile.class}}</div>
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2">
-    <flat-button @onclick="start" name="プロフィール変更" color="green"></flat-button></div>
+        <flat-button @onclick="start" name="プロフィール変更" color="green"></flat-button>
+      </div>
     </div>
     <flat-button @onclick="start" name="クラスを変更する" color="green"></flat-button>
     <div class="base mdc-layout-grid__inner">
@@ -25,11 +26,14 @@
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
         <flat-button @onclick="summon" name="デイリーガチャ" color="green"></flat-button>
       </div>
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+        <flat-button @onclick="logout" name="ログアウト" color="red"></flat-button>
+      </div>
     </div>
   </div>
 </template>
 <script>
-import { mapState } from 'vuex'
+import { mapActions, mapState } from 'vuex'
 import FlatButton from './Button'
 export default {
   name: 'Home',
@@ -45,9 +49,15 @@ export default {
     start: function() {
       this.$router.push('/history')
     },
+    logout: function() {
+      this.signOut().then(() => {
+        this.$router.push('/')
+      })
+    },
     summon: function() {
       this.$router.push('/summon')
-    }
+    },
+    ...mapActions('auth', ['signOut'])
   }
 }
 </script>
