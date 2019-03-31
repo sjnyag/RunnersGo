@@ -14,7 +14,7 @@
           <i></i>
         </div>
       </div>
-      <img ref="monster" class="monster" v-if="loaded">
+      <img ref="monster" class="monster">
     </div>
     <div class="salt-burst"></div>
   </div>
@@ -42,12 +42,14 @@ export default {
         const img = new Image()
         img.onload = () => {
           this.loaded = true
+          this.$refs.monster.style.display = 'block'
         }
         img.onerror = () => {
           this.$router.push('/home')
         }
         this.$refs.monster.src = './static/img/monsters/' + result.data.url
         img.src = this.$refs.monster.src
+        this.$refs.monster.style.display = 'none'
       })
       .catch(error => {
         console.log(error)
