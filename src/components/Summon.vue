@@ -1,7 +1,7 @@
 <template>
   <div class="page" v-lazy:background-image="backgroundImage">
     <div class="round-table">
-      <div class="summoning-circle">
+      <div class="summoning-circle" v-if="loaded">
         <div class="magic-circuit" v-lazy:background-image="magicCircuitImage"></div>
         <div class="stress-dots">
           <i></i>
@@ -14,7 +14,7 @@
           <i></i>
         </div>
       </div>
-      <img class="monster" v-lazy="monsterImage">
+      <img ref="monster" class="monster" v-if="loaded">
     </div>
     <div class="salt-burst"></div>
   </div>
@@ -25,11 +25,9 @@ export default {
   name: 'Top',
   data() {
     return {
+      loaded: false,
       backgroundImage: {
         src: './static/img/summon.jpg'
-      },
-      monsterImage: {
-        src: './static/img/kobold.png'
       },
       magicCircuitImage: {
         src: './static/img/magic_circuit.svg'
@@ -37,11 +35,23 @@ export default {
     }
   },
   mounted() {
-    this.dailySummon().then(result => {
-      console.log(result)
-    }).catch(error => {
-      console.log(error)
-    })
+    this.dailySummon()
+      .then(result => {
+        console.log(result.data)
+        console.log(this.$refs.monster)
+        const img = new Image()
+        img.onload = () => {
+          this.loaded = true
+        }
+        img.onerror = () => {
+          this.$router.push('/home')
+        }
+        this.$refs.monster.src = './static/img/monsters/' + result.data.url
+        img.src = this.$refs.monster.src
+      })
+      .catch(error => {
+        console.log(error)
+      })
   },
   methods: {
     ...mapActions('gamedata', ['dailySummon'])
@@ -263,7 +273,7 @@ div.page {
     width: 20vh;
     z-index: 5;
     transform: translateY(-28vh) scale(0);
-    animation: 3s MonsterScale 3s ease-in forwards;
+    animation: 3s MonsterScale 6s ease-in forwards;
   }
 }
 @keyframes MonsterScale {

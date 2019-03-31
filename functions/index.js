@@ -140,7 +140,15 @@ const validateFirebaseIdToken = (req, res, next) => {
       res.status(403).send('Unauthorized')
     })
 }
-
+const monsters = {
+  1: { url: 'Amazons.png', name: 'アマゾネス' },
+  2: { url: 'Dwarf.png', name: 'ドワーフ' },
+  3: { url: 'Ettin.png', name: 'エティン' },
+  4: { url: 'Ghast.png', name: 'ガスト' },
+  5: { url: 'Kelpie.png', name: 'ケルピー' },
+  6: { url: 'Kobold.png', name: 'コボルド' },
+  7: { url: 'Yeti.png', name: 'イエティ' }
+}
 const users = express()
 users.use(cors)
 users.use(cookieParser)
@@ -150,14 +158,39 @@ users.post('/dailySummon', (request, response) => {
     .firestore()
     .collection('users')
     .doc(request.user.uid)
-    .get()
-    .then(doc => {
-      return response.status(200).json(doc)
+    .collection('gameData')
+    .doc('lastDateOfDailySummon')
+    .set({ date: new Date().toString() })
+    .then(() => {
+      let no = Math.floor(Math.random() * 10)
+      if (!(no in monsters)) {
+        no = 2
+      }
+      return response.status(200).json(monsters[no])
     })
-    .catch(function(error) {
-      console.log('Error getting document:', error)
-      return response.status(500).json({ message: err })
-    })
+  // const db = admin.firestore()
+  // const docRef = db
+  //   .collection('users')
+  //   .doc(request.user.uid)
+  //   .collection('gameData')
+  //   .doc('lastDateOfDailySummon')
+  // return db
+  //   .runTransaction(transaction => {
+  //     // This code may get re-run multiple times if there are conflicts.
+  //     return transaction.get(docRef).then(sfDoc => {
+  //       if (!sfDoc.exists) {
+  //         throw 'Document does not exist!'
+  //       }
+  //       transaction.set(sfDoc, new Date())
+  //     })
+  //   })
+  //   .then(() => {
+  //     return response.status(200).json(Math.floor( Math.random() * 10 ))
+  //   })
+  //   .catch(error => {
+  //     console.log('Error getting document:', error)
+  //     return response.status(500).json({ message: error })
+  //   })
 })
 // This HTTPS endpoint can only be accessed by your Firebase Users.
 // Requests need to be authorized by providing an `Authorization` HTTP header
