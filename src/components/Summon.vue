@@ -14,7 +14,7 @@
           <i></i>
         </div>
       </div>
-      <img ref="monster" class="monster">
+      <div ref="monster" class="monster"></div>
     </div>
     <div class="salt-burst"></div>
   </div>
@@ -43,12 +43,12 @@ export default {
         img.onload = () => {
           this.loaded = true
           this.$refs.monster.style.display = 'block'
+          this.$refs.monster.style.backgroundImage = 'url(' + img.src + ')'
         }
         img.onerror = () => {
           this.$router.push('/home')
         }
-        this.$refs.monster.src = './static/img/monsters/' + result.data.url
-        img.src = this.$refs.monster.src
+        img.src = './static/img/monsters/' + result.data.url
         this.$refs.monster.style.display = 'none'
       })
       .catch(error => {
@@ -62,10 +62,15 @@ export default {
 </script>
 <style lang="scss" scoped>
 .round-table {
+  --color: white;
+  --max-length: 100vw;
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  width: var(--max-length);
+  height: var(--max-length);
   margin: auto;
   .summoning-circle {
     position: absolute;
@@ -74,11 +79,11 @@ export default {
     top: 0;
     bottom: 0;
     margin: auto;
-    height: 80vw;
-    width: 80vw;
-    transform-origin: 50% 50%;
+    height: 80%;
+    width: 80%;
+    transform-origin: 50% 100%;
     transform-style: preserve-3d;
-    transform: translateY(-30vh) rotateX(70deg);
+    transform: rotateX(70deg);
     .magic-circuit {
       position: absolute;
       left: 0;
@@ -87,7 +92,9 @@ export default {
       top: 0;
       margin: auto;
       transform-origin: 50% 50%;
-      background-size: cover;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center center;
       animation: 1.5s MagicCircuitScale ease-in forwards, 6.8s Rotate 1.5s linear infinite;
     }
     .stress-dots {
@@ -114,7 +121,7 @@ export default {
 }
 @keyframes DotsScale {
   from {
-    transform: scale(0.01) translateZ(50px);
+    transform: scale(0.01) translate(0%, -100%);
   }
   to {
     transform: scale(1) translateZ(0px);
@@ -129,11 +136,11 @@ export default {
   }
 }
 i {
-  height: 30px;
-  width: 30px;
+  height: 5%;
+  width: 5%;
   position: absolute;
   border-radius: 50%;
-  background-color: white;
+  background-color: var(--color);
   top: 0;
   left: 0;
   bottom: 0;
@@ -141,7 +148,7 @@ i {
   margin: auto;
   transform-style: preserve-3d;
   transform: rotate(0) rotateX(-90deg);
-  box-shadow: 0 0 10px white;
+  box-shadow: 0 0 30% white;
 
   &:before {
     content: '';
@@ -153,7 +160,7 @@ i {
     left: 0;
     background-color: inherit;
     transform: rotateY(-90deg);
-    box-shadow: 0 0 20px white;
+    box-shadow: 0 0 60% white;
   }
 
   &:first-child {
@@ -197,8 +204,8 @@ i {
   bottom: 0;
   left: 0;
   margin: auto;
-  height: 300px;
-  width: 300px;
+  height: 30%;
+  width: 30%;
   background-image: url('https://i.imgur.com/recX9HH.png');
   background-size: 100% 100%;
   animation: 12s salt-spin linear reverse infinite;
@@ -265,25 +272,41 @@ div.page {
     bottom: 0;
     z-index: -1;
   }
-  img.monster {
+  div.monster {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
     margin: auto;
     transform-origin: bottom;
-    width: 20vh;
+    width: 65%;
+    height: 65%;
     z-index: 5;
-    transform: translateY(-28vh) scale(0);
+    transform: translateY(-30%) scale(0);
     animation: 3s MonsterScale 6s ease-in forwards;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
   }
 }
 @keyframes MonsterScale {
   from {
-    transform: translateY(-28vh) scale(0);
+    transform: translateY(-30%) scale(0);
   }
   to {
-    transform: translateY(-28vh) scale(1);
+    transform: translateY(-25%) scale(1);
+  }
+}
+@media all and (orientation: landscape) {
+  .round-table {
+    --color: white;
+    --max-length: 100vh;
+  }
+}
+@media all and (orientation: portrait) {
+  .round-table {
+    --color: white;
+    --max-length: 100vw;
   }
 }
 </style>
