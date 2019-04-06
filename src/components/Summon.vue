@@ -14,6 +14,40 @@
           <i></i>
         </div>
       </div>
+      <div class="spark-area" v-if="loaded">
+        <div class="foreground">
+          <div class="spark" style="--pos-x:15.0%; --pos-y:11.0%;--size:2.8%;--delay:4.0s;"></div>
+          <div class="spark" style="--pos-x:20.0%; --pos-y:17.0%;--size:2.8%;--delay:4.0s;"></div>
+          <div class="spark" style="--pos-x:25.0%; --pos-y:19.0%;--size:2.4%;--delay:4.0s;"></div>
+          <div class="spark" style="--pos-x:30.0%; --pos-y:11.0%;--size:2.8%;--delay:4.0s;"></div>
+          <div class="spark" style="--pos-x:35.0%; --pos-y: 6.0%;--size:2.4%;--delay:4.0s;"></div>
+          <div class="spark" style="--pos-x:40.0%; --pos-y:21.0%;--size:2.8%;--delay:3.8s;"></div>
+          <div class="spark" style="--pos-x:45.0%; --pos-y:12.0%;--size:3.1%;--delay:3.8s;"></div>
+          <div class="spark" style="--pos-x:50.0%; --pos-y:10.5%;--size:3.4%;--delay:4.5s;"></div>
+          <div class="spark" style="--pos-x:55.0%; --pos-y:12.0%;--size:2.8%;--delay:4.5s;"></div>
+          <div class="spark" style="--pos-x:60.0%; --pos-y:22.0%;--size:2.8%;--delay:4.0s;"></div>
+          <div class="spark" style="--pos-x:65.0%; --pos-y:23.0%;--size:2.2%;--delay:4.0s;"></div>
+          <div class="spark" style="--pos-x:70.0%; --pos-y:11.0%;--size:2.8%;--delay:3.8s;"></div>
+          <div class="spark" style="--pos-x:75.0%; --pos-y:12.0%;--size:3.1%;--delay:3.8s;"></div>
+          <div class="spark" style="--pos-x:80.0%; --pos-y:10.5%;--size:3.4%;--delay:4.5s;"></div>
+        </div>
+        <div class="background">
+          <div class="spark" style="--pos-x:13.0%; --pos-y:11.0%;--size:0.8%;--delay:5.0s;"></div>
+          <div class="spark" style="--pos-x:20.0%; --pos-y:17.0%;--size:1.8%;--delay:5.0s;"></div>
+          <div class="spark" style="--pos-x:25.0%; --pos-y: 9.0%;--size:2.4%;--delay:5.0s;"></div>
+          <div class="spark" style="--pos-x:30.0%; --pos-y:11.0%;--size:1.8%;--delay:5.0s;"></div>
+          <div class="spark" style="--pos-x:35.0%; --pos-y:13.0%;--size:1.4%;--delay:5.0s;"></div>
+          <div class="spark" style="--pos-x:40.0%; --pos-y:19.0%;--size:4.8%;--delay:4.8s;"></div>
+          <div class="spark" style="--pos-x:45.0%; --pos-y:17.0%;--size:2.1%;--delay:4.8s;"></div>
+          <div class="spark" style="--pos-x:50.0%; --pos-y: 7.5%;--size:2.4%;--delay:5.5s;"></div>
+          <div class="spark" style="--pos-x:55.0%; --pos-y:11.0%;--size:1.8%;--delay:5.5s;"></div>
+          <div class="spark" style="--pos-x:60.0%; --pos-y:12.0%;--size:1.8%;--delay:5.0s;"></div>
+          <div class="spark" style="--pos-x:65.0%; --pos-y:13.0%;--size:3.2%;--delay:5.0s;"></div>
+          <div class="spark" style="--pos-x:70.0%; --pos-y:11.0%;--size:1.8%;--delay:4.8s;"></div>
+          <div class="spark" style="--pos-x:75.0%; --pos-y:12.0%;--size:2.1%;--delay:4.8s;"></div>
+          <div class="spark" style="--pos-x:80.0%; --pos-y:10.5%;--size:2.4%;--delay:5.5s;"></div>
+        </div>
+      </div>
       <div ref="monster" class="monster"></div>
     </div>
     <div class="salt-burst"></div>
@@ -61,6 +95,60 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+.spark-area {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  height: 80%;
+  width: 80%;
+  transform-origin: 50% 100%;
+  .background {
+    .spark {
+      z-index: 4;
+    }
+  }
+  .foreground {
+    .spark {
+      z-index: 6;
+    }
+  }
+  .spark {
+    --pos-y: 0;
+    --size: 20;
+    position: absolute;
+    left: var(--pos-x);
+    bottom: var(--pos-y);
+    width: calc(var(--size) * 4);
+    height: calc(var(--size) * 4);
+    background-color: rgb(255, 241, 202);
+    -webkit-border-radius: 50%;
+    border-radius: 50%;
+    opacity: 0;
+    box-shadow: 0 0 2vw 2vw rgb(255, 241, 202);
+    animation: 0.2s Spark var(--delay) ease-in forwards, 0.5s Disappear 10s ease-in forwards;
+  }
+}
+@keyframes Disappear {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes Spark {
+  from {
+    transform: scale(0.01);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
 .round-table {
   --color: white;
   --max-length: 100vw;
