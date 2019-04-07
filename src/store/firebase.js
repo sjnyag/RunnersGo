@@ -270,6 +270,23 @@ const actions = {
           reject(error)
         })
     })
+  },
+  activities({ dispatch }, datasetId) {
+    console.log('activities...')
+    return new Promise((resolve, reject) => {
+      dispatch('execUserApi', {
+        url: process.env.cloud_function_base_url + 'users/activities',
+        request: { datasetId: datasetId }
+      })
+        .then(result => {
+          console.log('activities... success')
+          resolve(result)
+        })
+        .catch(error => {
+          console.log('activities... error', error)
+          reject(error)
+        })
+    })
   }
 }
 

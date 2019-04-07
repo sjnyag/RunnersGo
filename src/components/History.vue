@@ -26,7 +26,7 @@ export default {
   methods: {
     execApi() {
       const datasetId = this.lastWeek().unix() * 1000 * 1000 * 1000 + '-' + moment().unix() * 1000 * 1000 * 1000
-      this.readFitnessDataSets(datasetId).then(response => {
+      this.activities(datasetId).then(response => {
         const isContinuous = function(before, after) {
           return (after - before) / (1000 * 1000 * 1000) < 15 * 60
         }
@@ -35,7 +35,7 @@ export default {
         }
         let before = 0
         const result = []
-        response.result.point.forEach(point => {
+        response.data.point.forEach(point => {
           if (isContinuous(before, point.startTimeNanos)) {
             this._.last(result).summary.endTimeNanos = point.endTimeNanos
           } else {
@@ -53,7 +53,7 @@ export default {
     lastWeek: function() {
       return moment(new Date()).subtract(7, 'days')
     },
-    ...mapActions('google', ['readFitnessDataSets'])
+    ...mapActions('gameData', ['activities'])
   }
 }
 </script>

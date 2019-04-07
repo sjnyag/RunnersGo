@@ -232,6 +232,99 @@ users.post('/allMonsters', (request, response) => {
       return response.status(500).json({ type: 'UnknownError', message: error })
     })
 })
+users.post('/activities', (request, response) => {
+  admin
+    .firestore()
+    .collection('users')
+    .doc(request.user.uid)
+    .collection('authentication')
+    .doc('google')
+    .get()
+    .then(existingAuthResult => {
+      const auth = existingAuthResult.data()
+      if (auth.expires_at && auth.code && auth.expires_at < new Date().getTime()) {
+        console.log('use new token')
+        rp({
+          method: 'POST',
+          uri: 'https://www.googleapis.com/oauth2/v4/token',
+          timeout: 30 * 1000,
+          json: {
+            client_id: functions.config().gapi.client_id,
+            client_secret: functions.config().gapi.client_secret,
+            refresh_token: auth.refresh_token,
+            grant_type: 'refresh_token'
+          }
+        })
+          .then(newTokenResponse => {
+            console.log(newTokenResponse)
+            if (!newTokenResponse.expires_at && newTokenResponse.expires_in) {
+              newTokenResponse.expires_at = new Date().getTime() + newTokenResponse.expires_in * 1000
+            }
+            const db = admin.firestore()
+            const authRef = db
+              .collection('users')
+              .doc(request.user.uid)
+              .collection('authentication')
+              .doc('google')
+            return db
+              .runTransaction(transaction => {
+                // This code may get re-run multiple times if there are conflicts.
+                return transaction.get(authRef).then(() => {
+                  transaction.set(authRef, newTokenResponse, { merge: true })
+                })
+              })
+              .then(() => {
+                rp({
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + newTokenResponse.access_token
+                  },
+                  method: 'GET',
+                  uri:
+                    'https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes/datasets/' +
+                    request.body.datasetId,
+                  timeout: 30 * 1000
+                })
+                  .then(data => {
+                    return response.status(200).json(JSON.parse(data))
+                  })
+                  .catch(err => {
+                    console.log(err)
+                    return response.status(500).json({ type: 'UnknownError', message: err })
+                  })
+              })
+          })
+          .catch(err => {
+            console.log(err)
+            return response.status(500).json({ type: 'UnknownError', message: err })
+          })
+      } else {
+        console.log('use existing token')
+        rp({
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + auth.access_token
+          },
+          method: 'GET',
+          uri:
+            'https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes/datasets/' +
+            request.body.datasetId,
+          timeout: 30 * 1000
+        })
+          .then(data => {
+            return response.status(200).json(JSON.parse(data))
+          })
+          .catch(err => {
+            console.log(err)
+            return response.status(500).json({ type: 'UnknownError', message: err })
+          })
+      }
+    })
+    .catch(error => {
+      console.log('Error getting document:', error)
+      return response.status(500).json({ type: 'UnknownError', message: error })
+    })
+})
 // This HTTPS endpoint can only be accessed by your Firebase Users.
 // Requests need to be authorized by providing an `Authorization` HTTP header
 // with value `Bearer <Firebase ID Token>`.

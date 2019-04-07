@@ -60,6 +60,20 @@ const actions = {
           reject(error)
         })
     })
+  },
+  activities({ dispatch }, datasetId) {
+    console.log('read activities...')
+    return new Promise((resolve, reject) => {
+      dispatch('firebase/activities', datasetId, { root: true })
+        .then(result => {
+          console.log('read activities... complete')
+          resolve(result)
+        })
+        .catch(error => {
+          console.log('read activities... error')
+          reject(error)
+        })
+    })
   }
 }
 
