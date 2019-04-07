@@ -14,6 +14,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "@material/grid-list": "^1.1.0",
     "@material/layout-grid": "^0.41.0",
     "axios": "^0.16.2",
     "dotenv-webpack": "^1.7.0",

@@ -130,7 +130,7 @@ export default {
       })
   },
   methods: {
-    ...mapActions('gamedata', ['dailySummon'])
+    ...mapActions('gameData', ['dailySummon'])
   }
 }
 </script>
