@@ -76,7 +76,7 @@ const actions = {
       }
     })
   },
-  refreshToken({ state, commit }) {
+  refreshToken({ state, dispatch, commit }) {
     console.log('refreshing token...')
     return new Promise((resolve, reject) => {
       axios
@@ -86,12 +86,23 @@ const actions = {
         .then(response => {
           console.log(response)
           commit('authorize', response.data)
-          resolve()
+          dispatch('sendLatestAuthentication').then(() => {
+            resolve()
+          })
         })
         .catch(err => {
           commit('signOut')
           reject(err)
         })
+    })
+  },
+  sendLatestAuthentication({ dispatch, state }) {
+    console.log('sending latest authentication...')
+    return new Promise(resolve => {
+      dispatch('firebase/saveAuthenticationData', { doc: 'google', data: state.authorization }, { root: true }).then(() => {
+        console.log('sending latest authentication... success')
+        resolve()
+      })
     })
   },
   signIn({ state, dispatch, commit }) {

@@ -11,8 +11,10 @@ const actions = {
         .then(authentication => {
           dispatch('firebase/signIn', { uid: authentication.id }, { root: true }).then(() => {
             commit('signIn', authentication)
-            dispatch('gameData/saveProfileByAuthentication', authentication, { root: true }).then(() => {
-              resolve()
+            dispatch('google/sendLatestAuthentication', {}, { root: true }).then(() => {
+              dispatch('gameData/saveProfileByAuthentication', authentication, { root: true }).then(() => {
+                resolve()
+              })
             })
           })
         })
