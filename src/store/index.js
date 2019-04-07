@@ -4,7 +4,7 @@ import createPersistedState from 'vuex-persistedstate'
 import auth from './auth'
 import google from './google'
 import firebase from './firebase'
-import gamedata from './gamedata'
+import gameData from './gameData'
 
 Vue.use(Vuex)
 
@@ -13,11 +13,19 @@ export default new Vuex.Store({
     auth,
     google,
     firebase,
-    gamedata
+    gameData
   },
   plugins: [
     createPersistedState({
-      paths: ['auth.authentication', 'auth.signedIn', 'google.authorization', 'firebase.tokenSentToServer', 'gamedata.profile', 'gamedata.history']
+      paths: [
+        'auth.authentication',
+        'auth.signedIn',
+        'google.authorization',
+        'firebase.tokenSentToServer',
+        'gameData.profile',
+        'gameData.history',
+        'gameData.lastDateOfDailySummon'
+      ]
     })
   ]
 })

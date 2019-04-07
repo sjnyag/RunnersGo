@@ -148,13 +148,13 @@ const validateFirebaseIdToken = (req, res, next) => {
     })
 }
 const MONSTERS = {
-  1: { no: 1, url: 'Amazons.png', name: 'アマゾネス' },
-  2: { no: 2, url: 'Dwarf.png', name: 'ドワーフ' },
-  3: { no: 3, url: 'Ettin.png', name: 'エティン' },
-  4: { no: 4, url: 'Ghast.png', name: 'ガスト' },
-  5: { no: 5, url: 'Kelpie.png', name: 'ケルピー' },
-  6: { no: 6, url: 'Kobold.png', name: 'コボルド' },
-  7: { no: 7, url: 'Yeti.png', name: 'イエティ' }
+  1: { no: 1, rarity: 2, url: 'Amazons.png', name: 'アマゾネス' },
+  2: { no: 2, rarity: 1, url: 'Dwarf.png', name: 'ドワーフ' },
+  3: { no: 3, rarity: 2, url: 'Ettin.png', name: 'エティン' },
+  4: { no: 4, rarity: 1, url: 'Ghast.png', name: 'ガスト' },
+  5: { no: 5, rarity: 2, url: 'Kelpie.png', name: 'ケルピー' },
+  6: { no: 6, rarity: 1, url: 'Kobold.png', name: 'コボルド' },
+  7: { no: 7, rarity: 1, url: 'Yeti.png', name: 'イエティ' }
 }
 const users = express()
 users.use(cors)
@@ -209,6 +209,27 @@ users.post('/dailySummon', (request, response) => {
       } else {
         return response.status(500).json({ type: 'UnknownError', message: error })
       }
+    })
+})
+users.post('/allMonsters', (request, response) => {
+  admin
+    .firestore()
+    .collection('users')
+    .doc(request.user.uid)
+    .collection('gameData')
+    .doc('monsters')
+    .collection('summoned')
+    .get()
+    .then(querySnapshot => {
+      const result = []
+      querySnapshot.forEach(doc => {
+        result.push(doc.data())
+      })
+      return response.status(200).json(result)
+    })
+    .catch(error => {
+      console.log('Error getting document:', error)
+      return response.status(500).json({ type: 'UnknownError', message: error })
     })
 })
 // This HTTPS endpoint can only be accessed by your Firebase Users.
