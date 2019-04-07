@@ -30,6 +30,19 @@ button {
       background-color: $activeColor;
     }
   }
+  &.red {
+    $color: #ff1744;
+    $shadowColor: darken($color, 10%);
+    $activeColor: darken($color, 8%);
+    background-color: $color;
+    box-shadow: 0 6px $shadowColor;
+    &:hover {
+      box-shadow: 0 5px $shadowColor;
+    }
+    &:active {
+      background-color: $activeColor;
+    }
+  }
   background-color: $color;
   box-shadow: 0 3px $shadowColor;
   &:hover {

@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Top from '@/components/Top'
 import Home from '@/components/Home'
 import History from '@/components/History'
+import Summon from '@/components/Summon'
 import store from '../store/index'
 
 Vue.use(Router)
@@ -34,6 +35,16 @@ const router = new Router({
       meta: {
         title: 'History'
       }
+    },
+    {
+      path: '/summon',
+      name: 'Summon',
+      component: Summon,
+      meta: {
+        title: 'Summon',
+        hideHeader: true,
+        hideFooter: true
+      }
     }
   ]
 })
@@ -41,7 +52,7 @@ const router = new Router({
 router.beforeEach((to, from, next) => {
   console.log('Routing to...' + to.name)
   console.log(store.state)
-  if (!store.state.firebase.tokenSentToServer && store.state.auth.profile && store.state.auth.profile.id) {
+  if (!store.state.firebase.tokenSentToServer && store.state.auth.authentication && store.state.auth.authentication.id) {
     store.dispatch('firebase/requestMessagingPermission')
   }
   if (to.name === from.name) {

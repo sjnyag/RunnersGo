@@ -6,6 +6,7 @@ import 'firebase/firestore'
 
 const state = {
   clientInitialized: false,
+  signedIn: false,
   tokenSentToServer: false,
   messagingInitialized: false
 }
@@ -68,7 +69,7 @@ const actions = {
   registerMessagingToken({ dispatch, rootState, commit }) {
     console.log('register messaging token...')
     return new Promise((resolve, reject) => {
-      if (!rootState.auth.profile.id) {
+      if (!rootState.auth.authentication.id) {
         console.log('register messaging token... skip')
         resolve()
       } else {
@@ -79,7 +80,7 @@ const actions = {
             .then(currentToken => {
               if (currentToken) {
                 commit('setTokenSentToServer', false)
-                dispatch('sendTokenToServer', currentToken).then(() => {
+                dispatch('sendMessageTokenToServer', currentToken).then(() => {
                   console.log('register messaging token... success')
                   resolve()
                 })
@@ -98,18 +99,19 @@ const actions = {
       }
     })
   },
-  sendTokenToServer({ dispatch, rootState, commit }, currentToken) {
-    console.log('upload messaging token...')
+  set({ dispatch, rootState }, data) {
+    console.log('firebase data saving...')
     return new Promise((resolve, reject) => {
       dispatch('initialize').then(() => {
         firebase
           .firestore()
           .collection('users')
-          .doc(rootState.auth.profile.id)
-          .set({ token: currentToken }, { merge: true })
+          .doc(rootState.auth.authentication.id)
+          .collection(data.name)
+          .doc(data.doc)
+          .set(data.data, { merge: true })
           .then(() => {
-            console.log('upload messaging token... success')
-            commit('setTokenSentToServer', true)
+            console.log('firebase data saving... success')
             resolve()
           })
           .catch(error => {
@@ -119,20 +121,135 @@ const actions = {
       })
     })
   },
-  signIn({ dispatch }, request) {
-    console.log('signing in to firebase...')
-    return new Promise(resolve => {
+  get({ dispatch, rootState }) {
+    console.log('firebase data reading...')
+    return new Promise((resolve, reject) => {
       dispatch('initialize').then(() => {
-        axios.post(process.env.cloud_function_base_url + 'createCustomToken', request).then(response => {
-          firebase
-            .auth()
-            .signInWithCustomToken(response.data.customToken)
-            .then(() => {
-              console.log('signing in to firebase... success')
-              resolve()
+        firebase
+          .firestore()
+          .collection('users')
+          .doc(rootState.auth.authentication.id)
+          .get()
+          .then(doc => {
+            console.log('firebase data reading... success')
+            if (doc.exists) {
+              resolve(doc)
+            } else {
+              console.log('No such document!')
+              resolve(null)
+            }
+          })
+          .catch(function(error) {
+            console.log('Error getting document:', error)
+            reject(error)
+          })
+      })
+    })
+  },
+  saveGameData({ dispatch }, data) {
+    return new Promise(resolve => {
+      dispatch('set', { ...data, name: 'gameData' }).then(() => {
+        resolve()
+      })
+    })
+  },
+  saveAuthenticationData({ dispatch }, data) {
+    return new Promise(resolve => {
+      dispatch('set', { ...data, name: 'authentication' }).then(() => {
+        resolve()
+      })
+    })
+  },
+  sendMessageTokenToServer({ dispatch, commit }, currentToken) {
+    console.log('upload messaging token...')
+    return new Promise((resolve, reject) => {
+      dispatch('saveAuthenticationData', { doc: 'push', data: { token: currentToken } })
+        .then(() => {
+          console.log('upload messaging token... success')
+          commit('setTokenSentToServer', true)
+          resolve()
+        })
+        .catch(error => {
+          console.error('Error adding document: ', error)
+          reject(error)
+        })
+    })
+  },
+  signIn({ dispatch, state, commit }, request) {
+    console.log('signing in to firebase...')
+    return new Promise((resolve, reject) => {
+      if (state.signedIn) {
+        console.log('signing in to firebase... skip')
+        resolve()
+      } else {
+        dispatch('initialize').then(() => {
+          axios
+            .post(process.env.cloud_function_base_url + 'createCustomToken', request)
+            .then(response => {
+              firebase
+                .auth()
+                .signInWithCustomToken(response.data.customToken)
+                .then(() => {
+                  commit('signedIn')
+                  console.log('signing in to firebase... success')
+                  resolve()
+                })
+            })
+            .catch(error => {
+              reject(error)
             })
         })
+      }
+    })
+  },
+  getCurrentIdToken({ dispatch, rootState }) {
+    console.log('getting current id token...')
+    return new Promise((resolve, reject) => {
+      dispatch('signIn', { uid: rootState.auth.authentication.id }).then(() => {
+        firebase
+          .auth()
+          .currentUser.getIdToken(true)
+          .then(idToken => {
+            console.log('getting current id token... success')
+            resolve(idToken)
+          })
+          .catch(error => {
+            console.error('Error adding document: ', error)
+            reject(error)
+          })
       })
+    })
+  },
+  execUserApi({ dispatch }, data) {
+    console.log('executing user api...')
+    return new Promise((resolve, reject) => {
+      dispatch('getCurrentIdToken').then(idToken => {
+        axios
+          .post(data.url, data.request, { headers: { Authorization: 'Bearer ' + idToken } })
+          .then(response => {
+            resolve(response)
+          })
+          .catch(err => {
+            reject(err)
+          })
+      })
+    })
+  },
+  dailySummon({ dispatch }) {
+    console.log('daily summon...')
+    return new Promise((resolve, reject) => {
+      dispatch('execUserApi', {
+        url: process.env.cloud_function_base_url + 'users/dailySummon',
+        request: {}
+      })
+        .then(result => {
+          console.log('daily summon... success')
+          resolve(result)
+        })
+        .catch(error => {
+          console.error(error)
+          reject(error)
+        })
     })
   }
 }
@@ -140,6 +257,9 @@ const actions = {
 const mutations = {
   clientInitialized(state) {
     state.clientInitialized = true
+  },
+  signedIn(state) {
+    state.signedIn = true
   },
   messagingInitialized(state) {
     state.messagingInitialized = true
