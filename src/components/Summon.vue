@@ -1,71 +1,82 @@
 <template>
-  <div class="page" v-lazy:background-image="backgroundImage">
-    <div class="round-table">
-      <div class="summoning-circle" v-if="loaded">
-        <div class="magic-circuit" v-lazy:background-image="magicCircuitImage"></div>
-        <div class="stress-dots">
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
+  <div>
+    <modal :modal="modal" v-if="modal"></modal>
+    <div class="page" v-lazy:background-image="backgroundImage">
+      <div class="round-table">
+        <div class="summoning-circle" v-if="loaded">
+          <div class="magic-circuit" v-lazy:background-image="magicCircuitImage"></div>
+          <div class="stress-dots">
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+          </div>
         </div>
+        <div class="spark-area" v-if="loaded">
+          <div class="foreground">
+            <div class="spark" style="--pos-x:15.0%; --pos-y:11.0%;--size:2.8%;--delay:4.0s;"></div>
+            <div class="spark" style="--pos-x:20.0%; --pos-y:17.0%;--size:2.8%;--delay:4.0s;"></div>
+            <div class="spark" style="--pos-x:25.0%; --pos-y:19.0%;--size:2.4%;--delay:4.0s;"></div>
+            <div class="spark" style="--pos-x:30.0%; --pos-y:11.0%;--size:2.8%;--delay:4.0s;"></div>
+            <div class="spark" style="--pos-x:35.0%; --pos-y: 6.0%;--size:2.4%;--delay:4.0s;"></div>
+            <div class="spark" style="--pos-x:40.0%; --pos-y:21.0%;--size:2.8%;--delay:3.8s;"></div>
+            <div class="spark" style="--pos-x:45.0%; --pos-y:12.0%;--size:3.1%;--delay:3.8s;"></div>
+            <div class="spark" style="--pos-x:50.0%; --pos-y:10.5%;--size:3.4%;--delay:4.5s;"></div>
+            <div class="spark" style="--pos-x:55.0%; --pos-y:12.0%;--size:2.8%;--delay:4.5s;"></div>
+            <div class="spark" style="--pos-x:60.0%; --pos-y:22.0%;--size:2.8%;--delay:4.0s;"></div>
+            <div class="spark" style="--pos-x:65.0%; --pos-y:23.0%;--size:2.2%;--delay:4.0s;"></div>
+            <div class="spark" style="--pos-x:70.0%; --pos-y:11.0%;--size:2.8%;--delay:3.8s;"></div>
+            <div class="spark" style="--pos-x:75.0%; --pos-y:12.0%;--size:3.1%;--delay:3.8s;"></div>
+            <div class="spark" style="--pos-x:80.0%; --pos-y:10.5%;--size:3.4%;--delay:4.5s;"></div>
+          </div>
+          <div class="background">
+            <div class="spark" style="--pos-x:13.0%; --pos-y:11.0%;--size:0.8%;--delay:5.0s;"></div>
+            <div class="spark" style="--pos-x:20.0%; --pos-y:17.0%;--size:1.8%;--delay:5.0s;"></div>
+            <div class="spark" style="--pos-x:25.0%; --pos-y: 9.0%;--size:2.4%;--delay:5.0s;"></div>
+            <div class="spark" style="--pos-x:30.0%; --pos-y:11.0%;--size:1.8%;--delay:5.0s;"></div>
+            <div class="spark" style="--pos-x:35.0%; --pos-y:13.0%;--size:1.4%;--delay:5.0s;"></div>
+            <div class="spark" style="--pos-x:40.0%; --pos-y:19.0%;--size:4.8%;--delay:4.8s;"></div>
+            <div class="spark" style="--pos-x:45.0%; --pos-y:17.0%;--size:2.1%;--delay:4.8s;"></div>
+            <div class="spark" style="--pos-x:50.0%; --pos-y: 7.5%;--size:2.4%;--delay:5.5s;"></div>
+            <div class="spark" style="--pos-x:55.0%; --pos-y:11.0%;--size:1.8%;--delay:5.5s;"></div>
+            <div class="spark" style="--pos-x:60.0%; --pos-y:12.0%;--size:1.8%;--delay:5.0s;"></div>
+            <div class="spark" style="--pos-x:65.0%; --pos-y:13.0%;--size:3.2%;--delay:5.0s;"></div>
+            <div class="spark" style="--pos-x:70.0%; --pos-y:11.0%;--size:1.8%;--delay:4.8s;"></div>
+            <div class="spark" style="--pos-x:75.0%; --pos-y:12.0%;--size:2.1%;--delay:4.8s;"></div>
+            <div class="spark" style="--pos-x:80.0%; --pos-y:10.5%;--size:2.4%;--delay:5.5s;"></div>
+          </div>
+        </div>
+        <div ref="monster" class="monster"></div>
+        <p>{{name}}</p>
       </div>
-      <div class="spark-area" v-if="loaded">
-        <div class="foreground">
-          <div class="spark" style="--pos-x:15.0%; --pos-y:11.0%;--size:2.8%;--delay:4.0s;"></div>
-          <div class="spark" style="--pos-x:20.0%; --pos-y:17.0%;--size:2.8%;--delay:4.0s;"></div>
-          <div class="spark" style="--pos-x:25.0%; --pos-y:19.0%;--size:2.4%;--delay:4.0s;"></div>
-          <div class="spark" style="--pos-x:30.0%; --pos-y:11.0%;--size:2.8%;--delay:4.0s;"></div>
-          <div class="spark" style="--pos-x:35.0%; --pos-y: 6.0%;--size:2.4%;--delay:4.0s;"></div>
-          <div class="spark" style="--pos-x:40.0%; --pos-y:21.0%;--size:2.8%;--delay:3.8s;"></div>
-          <div class="spark" style="--pos-x:45.0%; --pos-y:12.0%;--size:3.1%;--delay:3.8s;"></div>
-          <div class="spark" style="--pos-x:50.0%; --pos-y:10.5%;--size:3.4%;--delay:4.5s;"></div>
-          <div class="spark" style="--pos-x:55.0%; --pos-y:12.0%;--size:2.8%;--delay:4.5s;"></div>
-          <div class="spark" style="--pos-x:60.0%; --pos-y:22.0%;--size:2.8%;--delay:4.0s;"></div>
-          <div class="spark" style="--pos-x:65.0%; --pos-y:23.0%;--size:2.2%;--delay:4.0s;"></div>
-          <div class="spark" style="--pos-x:70.0%; --pos-y:11.0%;--size:2.8%;--delay:3.8s;"></div>
-          <div class="spark" style="--pos-x:75.0%; --pos-y:12.0%;--size:3.1%;--delay:3.8s;"></div>
-          <div class="spark" style="--pos-x:80.0%; --pos-y:10.5%;--size:3.4%;--delay:4.5s;"></div>
-        </div>
-        <div class="background">
-          <div class="spark" style="--pos-x:13.0%; --pos-y:11.0%;--size:0.8%;--delay:5.0s;"></div>
-          <div class="spark" style="--pos-x:20.0%; --pos-y:17.0%;--size:1.8%;--delay:5.0s;"></div>
-          <div class="spark" style="--pos-x:25.0%; --pos-y: 9.0%;--size:2.4%;--delay:5.0s;"></div>
-          <div class="spark" style="--pos-x:30.0%; --pos-y:11.0%;--size:1.8%;--delay:5.0s;"></div>
-          <div class="spark" style="--pos-x:35.0%; --pos-y:13.0%;--size:1.4%;--delay:5.0s;"></div>
-          <div class="spark" style="--pos-x:40.0%; --pos-y:19.0%;--size:4.8%;--delay:4.8s;"></div>
-          <div class="spark" style="--pos-x:45.0%; --pos-y:17.0%;--size:2.1%;--delay:4.8s;"></div>
-          <div class="spark" style="--pos-x:50.0%; --pos-y: 7.5%;--size:2.4%;--delay:5.5s;"></div>
-          <div class="spark" style="--pos-x:55.0%; --pos-y:11.0%;--size:1.8%;--delay:5.5s;"></div>
-          <div class="spark" style="--pos-x:60.0%; --pos-y:12.0%;--size:1.8%;--delay:5.0s;"></div>
-          <div class="spark" style="--pos-x:65.0%; --pos-y:13.0%;--size:3.2%;--delay:5.0s;"></div>
-          <div class="spark" style="--pos-x:70.0%; --pos-y:11.0%;--size:1.8%;--delay:4.8s;"></div>
-          <div class="spark" style="--pos-x:75.0%; --pos-y:12.0%;--size:2.1%;--delay:4.8s;"></div>
-          <div class="spark" style="--pos-x:80.0%; --pos-y:10.5%;--size:2.4%;--delay:5.5s;"></div>
-        </div>
-      </div>
-      <div ref="monster" class="monster"></div>
+      <div class="salt-burst"></div>
     </div>
-    <div class="salt-burst"></div>
   </div>
 </template>
 <script>
 import { mapActions } from 'vuex'
+import Modal from './Modal'
+import { setInterval } from 'timers'
 export default {
   name: 'Top',
+  components: {
+    Modal
+  },
   data() {
     return {
+      name: '',
       loaded: false,
       backgroundImage: {
         src: './static/img/summon.jpg'
       },
       magicCircuitImage: {
         src: './static/img/magic_circuit.svg'
-      }
+      },
+      modal: null
     }
   },
   mounted() {
@@ -78,15 +89,44 @@ export default {
           this.loaded = true
           this.$refs.monster.style.display = 'block'
           this.$refs.monster.style.backgroundImage = 'url(' + img.src + ')'
+          setInterval(() => {
+            this.modal = {
+              header: '本日のガチャは終了しました。',
+              body: '明日また回してね。',
+              buttons: [
+                {
+                  label: 'OK',
+                  onClick: () => {
+                    this.$router.push('/home')
+                  }
+                }
+              ]
+            }
+          }, 10000)
         }
         img.onerror = () => {
-          this.$router.push('/home')
+          // this.$router.push('/home')
         }
+        this.name = result.data.name
         img.src = './static/img/monsters/' + result.data.url
         this.$refs.monster.style.display = 'none'
       })
       .catch(error => {
         console.log(error)
+        if (error.response.data.type === 'AlreadySummonedError') {
+          this.modal = {
+            header: '本日のガチャは終了しています。',
+            body: '明日また回してね。',
+            buttons: [
+              {
+                label: 'OK',
+                onClick: () => {
+                  this.$router.push('/home')
+                }
+              }
+            ]
+          }
+        }
       })
   },
   methods: {
@@ -95,6 +135,29 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+p {
+  text-shadow: 1px 1px 2px red, 0 0 1em blue, 0 0 0.2em blue;
+  text-align: center;
+  font-size: 120px;
+  -webkit-text-fill-color: black;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: white;
+  letter-spacing: 10px;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(-30%) scale(0);
+  animation: 3s MonsterNameScale 6s ease-in forwards;
+}
+@keyframes MonsterNameScale {
+  from {
+    opacity: 0;
+    transform: translateY(-30%) scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0%) scale(1);
+  }
+}
 .spark-area {
   position: absolute;
   left: 0;
@@ -107,12 +170,12 @@ export default {
   transform-origin: 50% 100%;
   .background {
     .spark {
-      z-index: 4;
+      z-index: -2;
     }
   }
   .foreground {
     .spark {
-      z-index: 6;
+      z-index: 2;
     }
   }
   .spark {
@@ -160,6 +223,7 @@ export default {
   width: var(--max-length);
   height: var(--max-length);
   margin: auto;
+  z-index: -3;
   .summoning-circle {
     position: absolute;
     left: 0;
@@ -294,6 +358,7 @@ i {
   margin: auto;
   height: 30%;
   width: 30%;
+  z-index: -4;
   background-image: url('https://i.imgur.com/recX9HH.png');
   background-size: 100% 100%;
   animation: 12s salt-spin linear reverse infinite;
@@ -346,7 +411,7 @@ div.page {
   background-color: #464646;
   position: relative;
   overflow: hidden;
-  z-index: 0;
+  z-index: -10;
   justify-self: center;
   align-self: center;
   text-align: center;
@@ -358,7 +423,7 @@ div.page {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: -1;
+    z-index: -11;
   }
   div.monster {
     position: absolute;
@@ -369,7 +434,7 @@ div.page {
     transform-origin: bottom;
     width: 65%;
     height: 65%;
-    z-index: 5;
+    z-index: 0;
     transform: translateY(-30%) scale(0);
     animation: 3s MonsterScale 6s ease-in forwards;
     background-size: contain;
