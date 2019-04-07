@@ -102,7 +102,7 @@ export default {
                 }
               ]
             }
-          }, 10000)
+          }, 14000)
         }
         img.onerror = () => {
           // this.$router.push('/home')
@@ -138,7 +138,7 @@ export default {
 p {
   text-shadow: 1px 1px 2px red, 0 0 1em blue, 0 0 0.2em blue;
   text-align: center;
-  font-size: 120px;
+  font-size: 200%;
   -webkit-text-fill-color: black;
   -webkit-text-stroke-width: 1px;
   -webkit-text-stroke-color: white;

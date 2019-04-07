@@ -1,5 +1,6 @@
 <template>
   <div class="mdc-grid-list">
+    <full-screen-loader v-if="loading"></full-screen-loader>
     <ul class="mdc-grid-list__tiles">
       <template v-for="(monster, index) in monsters">
         <li :key="index" class="mdc-grid-tile">
@@ -28,7 +29,7 @@ export default {
   data() {
     return {
       monsters: [],
-      loading: false
+      loading: true
     }
   },
   mounted() {
@@ -37,6 +38,7 @@ export default {
   methods: {
     execApi() {
       this.allMonsters().then(response => {
+        this.loading = false
         console.log(response)
         this.monsters = response.data
       })
@@ -57,5 +59,8 @@ export default {
 }
 .mdc-grid-tile__title {
   text-align: center;
+}
+.mdc-grid-tile {
+  margin: auto;
 }
 </style>
