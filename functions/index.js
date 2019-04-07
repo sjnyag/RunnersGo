@@ -2,6 +2,7 @@ const functions = require('firebase-functions')
 const cors = require('cors')({ origin: true })
 const rp = require('request-promise')
 const admin = require('firebase-admin')
+const _ = require('lodash')
 
 // Create and Deploy Your First Cloud Functions
 // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -310,6 +311,29 @@ const execGApi = (request, requestToGoogle) => {
     })
   })
 }
+const summaryActivity = response => {
+  const isContinuous = (before, after) => {
+    return (after - before) / (1000 * 1000 * 1000) < 15 * 60
+  }
+  const isWorkout = summary => {
+    return (summary.endTimeNanos - summary.startTimeNanos) / (1000 * 1000 * 1000) > 5 * 60
+  }
+  let before = 0
+  const result = []
+  response.point.forEach(point => {
+    if (isContinuous(before, point.startTimeNanos)) {
+      _.last(result).summary.endTimeNanos = point.endTimeNanos
+    } else {
+      point.summary = {
+        startTimeNanos: point.startTimeNanos,
+        endTimeNanos: point.endTimeNanos
+      }
+      result.push(point)
+    }
+    before = point.endTimeNanos
+  })
+  return _.reverse(_.filter(result, point => isWorkout(point.summary)))
+}
 users.post('/activities', (request, response) => {
   const requestToGoogle = {
     method: 'GET',
@@ -320,7 +344,7 @@ users.post('/activities', (request, response) => {
   }
   execGApi(request, requestToGoogle)
     .then(data => {
-      return response.status(200).json(JSON.parse(data))
+      return response.status(200).json(summaryActivity(JSON.parse(data)))
     })
     .catch(err => {
       console.log(err)
