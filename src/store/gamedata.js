@@ -2,7 +2,8 @@ import _ from 'lodash'
 
 const state = {
   profile: {},
-  history: {}
+  history: {},
+  lastDateOfDailySummon: null
 }
 
 const actions = {
@@ -30,12 +31,44 @@ const actions = {
           reject(error)
         })
     })
+  },
+  isEnableDailySummon({ state }) {
+    console.log('check if enable to summon today...')
+    return new Promise(resolve => {
+      let result = true
+      if (state.lastDateOfDailySummon) {
+        const lastDate = new Date(state.lastDateOfDailySummon + 1000 * 60 * 60 * 9)
+        const toDateNumber = date => {
+          return date.getFullYear() * 10000 + date.getUTCMonth() * 100 + date.getUTCDate()
+        }
+        result = toDateNumber(lastDate) < toDateNumber(new Date())
+      }
+      console.log('check if enable to summon today...', result)
+      resolve(result)
+    })
+  },
+  allMonsters({ dispatch }) {
+    console.log('all monsters...')
+    return new Promise((resolve, reject) => {
+      dispatch('firebase/allMonsters', {}, { root: true })
+        .then(result => {
+          console.log('all monsters... complete')
+          resolve(result)
+        })
+        .catch(error => {
+          console.log('all monsters... error')
+          reject(error)
+        })
+    })
   }
 }
 
 const mutations = {
   saveProfile(state, profile) {
     state.profile = profile
+  },
+  dailySummon(state, now) {
+    state.lastDateOfDailySummon = now
   }
 }
 

@@ -4,6 +4,7 @@ import Top from '@/components/Top'
 import Home from '@/components/Home'
 import History from '@/components/History'
 import Summon from '@/components/Summon'
+import Monsters from '@/components/Monsters'
 import store from '../store/index'
 
 Vue.use(Router)
@@ -44,6 +45,14 @@ const router = new Router({
         title: 'Summon',
         hideHeader: true,
         hideFooter: true
+      }
+    },
+    {
+      path: '/monsters',
+      name: 'Monsters',
+      component: Monsters,
+      meta: {
+        title: 'Monsters'
       }
     }
   ]

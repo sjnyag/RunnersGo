@@ -235,8 +235,9 @@ const actions = {
       })
     })
   },
-  dailySummon({ dispatch }) {
+  dailySummon({ dispatch, commit }) {
     console.log('daily summon...')
+    const now = new Date().getTime()
     return new Promise((resolve, reject) => {
       dispatch('execUserApi', {
         url: process.env.cloud_function_base_url + 'users/dailySummon',
@@ -244,10 +245,28 @@ const actions = {
       })
         .then(result => {
           console.log('daily summon... success')
+          commit('gameData/dailySummon', now, { root: true })
           resolve(result)
         })
         .catch(error => {
-          console.error(error)
+          console.log('daily summon... error', error)
+          reject(error)
+        })
+    })
+  },
+  allMonsters({ dispatch }) {
+    console.log('all monsters...')
+    return new Promise((resolve, reject) => {
+      dispatch('execUserApi', {
+        url: process.env.cloud_function_base_url + 'users/allMonsters',
+        request: {}
+      })
+        .then(result => {
+          console.log('all monsters... success')
+          resolve(result)
+        })
+        .catch(error => {
+          console.log('all monsters... error', error)
           reject(error)
         })
     })
