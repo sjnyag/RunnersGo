@@ -168,10 +168,7 @@ users.post('/dailySummon', (request, response) => {
     .runTransaction(transaction => {
       // This code may get re-run multiple times if there are conflicts.
       return transaction.get(userRef).then(user => {
-        if (!user.exists) {
-          throw 'Document does not exist!'
-        }
-        if (user.data().latests && user.data().latests.lastDateOfDailySummon) {
+        if (user.exists && user.data().latests && user.data().latests.lastDateOfDailySummon) {
           const lastDate = new Date(user.data().latests.lastDateOfDailySummon + 1000 * 60 * 60 * 9)
           const toDateNumber = date => {
             return date.getFullYear() * 10000 + date.getUTCMonth() * 100 + date.getUTCDate()
