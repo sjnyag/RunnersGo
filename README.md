@@ -29,7 +29,7 @@ npm run e2e
 # run all tests
 npm test
 
-# Deploy to Firebase
+# Deploy to Firebase ( needs /.env File)
 npm install -g firebase-tools
 firebase login
 firebase init hosting

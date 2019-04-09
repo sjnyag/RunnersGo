@@ -51,7 +51,7 @@
           </div>
         </div>
         <div ref="monster" class="monster"></div>
-        <p>{{name}}</p>
+        <p ref="monsterName">{{name}}</p>
       </div>
       <div class="salt-burst"></div>
     </div>
@@ -88,6 +88,7 @@ export default {
         img.onload = () => {
           this.loaded = true
           this.$refs.monster.style.display = 'block'
+          this.$refs.monsterName.style.display = 'block'
           this.$refs.monster.style.backgroundImage = 'url(' + img.src + ')'
           setInterval(() => {
             this.modal = {
@@ -105,11 +106,12 @@ export default {
           }, 14000)
         }
         img.onerror = () => {
-          // this.$router.push('/home')
+          this.showUnknownError()
         }
         this.name = result.data.name
         img.src = './static/img/monsters/' + result.data.url
         this.$refs.monster.style.display = 'none'
+        this.$refs.monsterName.style.display = 'none'
       })
       .catch(error => {
         console.log(error)
@@ -126,10 +128,26 @@ export default {
               }
             ]
           }
+        } else {
+          this.showUnknownError()
         }
       })
   },
   methods: {
+    showUnknownError: function() {
+      this.modal = {
+        header: 'エラーが発生しました。',
+        body: 'TOPに戻ります。',
+        buttons: [
+          {
+            label: 'OK',
+            onClick: () => {
+              this.$router.push('/home')
+            }
+          }
+        ]
+      }
+    },
     ...mapActions('gameData', ['dailySummon'])
   }
 }
@@ -146,7 +164,7 @@ p {
   z-index: 1;
   opacity: 0;
   transform: translateY(-30%) scale(0);
-  animation: 3s MonsterNameScale 6s ease-in forwards;
+  animation: 3s MonsterNameScale 8s ease-in forwards;
 }
 @keyframes MonsterNameScale {
   from {
