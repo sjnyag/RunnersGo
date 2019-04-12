@@ -1,5 +1,6 @@
 <template>
   <div>
+    <full-screen-loader v-if="loading"></full-screen-loader>
     <template v-for="(session, index) in sessions">
       <session :key="'session_'+index" :session="session"></session>
     </template>
@@ -7,17 +8,20 @@
 </template>
 <script>
 import { mapActions } from 'vuex'
+import FullScreenLoader from './FullScreenLoader'
 import Session from './Session'
 import moment from 'moment'
 
 export default {
   name: 'History',
   components: {
-    Session
+    Session,
+    FullScreenLoader
   },
   data() {
     return {
-      sessions: []
+      sessions: [],
+      loading: true
     }
   },
   mounted() {
@@ -25,13 +29,14 @@ export default {
   },
   methods: {
     execApi() {
-      const datasetId = this.lastWeek().unix() * 1000 * 1000 * 1000 + '-' + moment().unix() * 1000 * 1000 * 1000
+      const datasetId = this.startDay().unix() * 1000 * 1000 * 1000 + '-' + moment().unix() * 1000 * 1000 * 1000
       this.activities(datasetId).then(response => {
+        this.loading = false
         this.sessions = response.data
       })
     },
-    lastWeek: function() {
-      return moment(new Date()).subtract(7, 'days')
+    startDay: function() {
+      return moment(new Date()).subtract(2, 'days')
     },
     ...mapActions('gameData', ['activities'])
   }

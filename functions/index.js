@@ -161,6 +161,11 @@ const users = express()
 users.use(cors)
 users.use(cookieParser)
 users.use(validateFirebaseIdToken)
+users.use((_, response, next) => {
+  response.header('Access-Control-Allow-Origin', '*')
+  response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+  next()
+})
 users.post('/dailySummon', (request, response) => {
   const db = admin.firestore()
   const userRef = db.collection('users').doc(request.user.uid)
@@ -230,7 +235,17 @@ users.post('/allMonsters', (request, response) => {
       return response.status(500).json({ type: 'UnknownError', message: error })
     })
 })
-const updateGoogleApiToken = (refresh_token, uid) => {
+const updateGoogleApiTokenIfNeed = (auth, uid) => {
+  const needsUpdate = auth => {
+    return auth.expires_at && auth.code && auth.expires_at < new Date().getTime()
+  }
+  if (!needsUpdate(auth)) {
+    console.log('use existing token')
+    return new Promise(resolve => {
+      resolve(auth)
+    })
+  }
+  console.log('use new token')
   return new Promise(resolve => {
     rp({
       method: 'POST',
@@ -239,7 +254,7 @@ const updateGoogleApiToken = (refresh_token, uid) => {
       json: {
         client_id: functions.config().gapi.client_id,
         client_secret: functions.config().gapi.client_secret,
-        refresh_token: refresh_token,
+        refresh_token: auth.refresh_token,
         grant_type: 'refresh_token'
       }
     }).then(response => {
@@ -277,25 +292,14 @@ const resolveGApiHeader = uid => {
       .get()
       .then(existingAuthResult => {
         const auth = existingAuthResult.data()
-        if (auth.expires_at && auth.code && auth.expires_at < new Date().getTime()) {
-          console.log('use new token')
-          updateGoogleApiToken(auth.refresh_token, request.user.uid).then(newAuth => {
-            resolve({
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: 'Bearer ' + newAuth.access_token
-              }
-            })
-          })
-        } else {
-          console.log('use existing token')
+        updateGoogleApiTokenIfNeed(auth, uid).then(newAuth => {
           resolve({
             headers: {
               'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + auth.access_token
+              Authorization: 'Bearer ' + newAuth.access_token
             }
           })
-        }
+        })
       })
   })
 }
