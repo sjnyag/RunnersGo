@@ -30,10 +30,14 @@ export default {
   methods: {
     execApi() {
       const datasetId = this.startDay().unix() * 1000 * 1000 * 1000 + '-' + moment().unix() * 1000 * 1000 * 1000
-      this.activities(datasetId).then(response => {
-        this.loading = false
-        this.sessions = response.data
-      })
+      this.activities(datasetId)
+        .then(response => {
+          this.loading = false
+          this.sessions = response.data
+        })
+        .catch(() => {
+          this.loading = false
+        })
     },
     startDay: function() {
       return moment(new Date()).subtract(2, 'days')
