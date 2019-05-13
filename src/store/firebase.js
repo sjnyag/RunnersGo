@@ -28,42 +28,51 @@ const actions = {
   },
   initMessaging({ commit, dispatch, state }) {
     console.log('init messaging...')
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       if (state.messagingInitialized) {
         console.log('init messaging... skip')
         resolve()
       } else {
-        dispatch('initialize').then(() => {
-          firebase.messaging().usePublicVapidKey(process.env.public_valid_key)
-          firebase.messaging().onTokenRefresh(() => {
-            commit('setTokenSentToServer', false)
-            dispatch('registerMessagingToken')
+        dispatch('initialize')
+          .then(() => {
+            firebase.messaging().usePublicVapidKey(process.env.public_valid_key)
+            firebase.messaging().onTokenRefresh(() => {
+              commit('setTokenSentToServer', false)
+              dispatch('registerMessagingToken')
+            })
+            firebase.messaging().onMessage(payload => {
+              console.log('Message receiver ', payload)
+              console.log('Notification: ', payload.notification)
+            })
+            commit('messagingInitialized')
+            console.log('init messaging... complete')
+            resolve()
           })
-          firebase.messaging().onMessage(payload => {
-            console.log('Message receiver ', payload)
-            console.log('Notification: ', payload.notification)
+          .catch(err => {
+            console.log('An error occurred while init messaging. ', err)
+            reject(err)
           })
-          commit('messagingInitialized')
-          console.log('init messaging... complete')
-          resolve()
-        })
       }
     })
   },
   requestMessagingPermission({ dispatch }) {
     console.log('request messaging permission...')
-    return new Promise(resolve => {
-      dispatch('initMessaging').then(() => {
-        firebase
-          .messaging()
-          .requestPermission()
-          .then(() => {
-            console.log('Notification permission granted.')
-            dispatch('registerMessagingToken').then(() => {
-              resolve()
+    return new Promise((resolve, reject) => {
+      dispatch('initMessaging')
+        .then(() => {
+          firebase
+            .messaging()
+            .requestPermission()
+            .then(() => {
+              console.log('Notification permission granted.')
+              dispatch('registerMessagingToken').then(() => {
+                resolve()
+              })
             })
-          })
-      })
+        })
+        .catch(err => {
+          reject(err)
+        })
     })
   },
   registerMessagingToken({ dispatch, rootState, commit }) {
@@ -73,29 +82,33 @@ const actions = {
         console.log('register messaging token... skip')
         resolve()
       } else {
-        dispatch('initMessaging').then(() => {
-          firebase
-            .messaging()
-            .getToken()
-            .then(currentToken => {
-              if (currentToken) {
+        dispatch('initMessaging')
+          .then(() => {
+            firebase
+              .messaging()
+              .getToken()
+              .then(currentToken => {
+                if (currentToken) {
+                  commit('setTokenSentToServer', false)
+                  dispatch('sendMessageTokenToServer', currentToken).then(() => {
+                    console.log('register messaging token... success')
+                    resolve()
+                  })
+                } else {
+                  console.log('No Instance ID token available. Request permission to generate one.')
+                  commit('setTokenSentToServer', false)
+                  reject(new Error('No Instance ID token available. Request permission to generate one.'))
+                }
+              })
+              .catch(err => {
+                console.log('An error occurred while retrieving token. ', err)
                 commit('setTokenSentToServer', false)
-                dispatch('sendMessageTokenToServer', currentToken).then(() => {
-                  console.log('register messaging token... success')
-                  resolve()
-                })
-              } else {
-                console.log('No Instance ID token available. Request permission to generate one.')
-                commit('setTokenSentToServer', false)
-                reject(new Error('No Instance ID token available. Request permission to generate one.'))
-              }
-            })
-            .catch(err => {
-              console.log('An error occurred while retrieving token. ', err)
-              commit('setTokenSentToServer', false)
-              reject(err)
-            })
-        })
+                reject(err)
+              })
+          })
+          .catch(err => {
+            reject(err)
+          })
       }
     })
   },
