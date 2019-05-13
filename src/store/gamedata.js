@@ -61,10 +61,10 @@ const actions = {
         })
     })
   },
-  activities({ dispatch }, datasetId) {
+  activities({ dispatch }, request) {
     console.log('read activities...')
     return new Promise((resolve, reject) => {
-      dispatch('firebase/activities', datasetId, { root: true })
+      dispatch('firebase/activities', request, { root: true })
         .then(result => {
           console.log('read activities... complete')
           resolve(result)

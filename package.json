@@ -23,6 +23,7 @@
     "material-components-web": "^0.44.0",
     "moment": "^2.24.0",
     "vue": "^2.5.2",
+    "vue-infinite-loading": "^2.4.4",
     "vue-router": "^3.0.1",
     "vuex": "^2.4.0",
     "vuex-persistedstate": "^2.0.0",

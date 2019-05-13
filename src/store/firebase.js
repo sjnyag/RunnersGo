@@ -284,12 +284,12 @@ const actions = {
         })
     })
   },
-  activities({ dispatch }, datasetId) {
+  activities({ dispatch }, request) {
     console.log('activities...')
     return new Promise((resolve, reject) => {
       dispatch('execUserApi', {
         url: process.env.cloud_function_base_url + 'users/activities',
-        request: { datasetId: datasetId }
+        request: request
       })
         .then(result => {
           console.log('activities... success')

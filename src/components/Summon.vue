@@ -115,7 +115,7 @@ export default {
       })
       .catch(error => {
         console.log(error)
-        if (error.response.data.type === 'AlreadySummonedError') {
+        if (error.response && error.response.data.type === 'AlreadySummonedError') {
           this.modal = {
             header: '本日のガチャは終了しています。',
             body: '明日また回してね。',

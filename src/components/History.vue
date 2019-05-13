@@ -1,46 +1,64 @@
 <template>
   <div>
-    <full-screen-loader v-if="loading"></full-screen-loader>
+    <modal :modal="modal" v-if="modal"></modal>
     <template v-for="(session, index) in sessions">
       <session :key="'session_'+index" :session="session"></session>
     </template>
+    <infinite-loading @infinite="infiniteHandler"></infinite-loading>
   </div>
 </template>
 <script>
 import { mapActions } from 'vuex'
-import FullScreenLoader from './FullScreenLoader'
 import Session from './Session'
+import Modal from './Modal'
 import moment from 'moment'
+import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'History',
   components: {
     Session,
-    FullScreenLoader
+    InfiniteLoading,
+    Modal
   },
   data() {
     return {
+      fromMoment: moment(new Date()),
       sessions: [],
-      loading: true
+      modal: null
     }
   },
-  mounted() {
-    this.execApi()
-  },
   methods: {
-    execApi() {
-      const datasetId = this.startDay().unix() * 1000 * 1000 * 1000 + '-' + moment().unix() * 1000 * 1000 * 1000
-      this.activities(datasetId)
+    infiniteHandler($state) {
+      this.activities(this.calcRequest(this.fromMoment))
         .then(response => {
-          this.loading = false
-          this.sessions = response.data
+          this.sessions.push(...response.data)
+          if (response.data.length === 0) {
+            $state.complete()
+          }
+          $state.loaded()
         })
         .catch(() => {
-          this.loading = false
+          $state.complete()
+          this.showUnknownError()
         })
     },
-    startDay: function() {
-      return moment(new Date()).subtract(2, 'days')
+    calcRequest: function(startMoment) {
+      return { startTimeNanos: startMoment.unix() * 1000 * 1000 * 1000, endTimeNanos: startMoment.subtract(4, 'days').unix() * 1000 * 1000 * 1000 }
+    },
+    showUnknownError: function() {
+      this.modal = {
+        header: 'エラーが発生しました。',
+        body: 'サーバが無料プランなので、100秒あたりのリクエスト回数が制限されています。。。',
+        buttons: [
+          {
+            label: 'OK',
+            onClick: () => {
+              this.modal = null
+            }
+          }
+        ]
+      }
     },
     ...mapActions('gameData', ['activities'])
   }

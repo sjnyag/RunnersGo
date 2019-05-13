@@ -484,71 +484,46 @@ users.post('/allMonsters', (request, response) => {
     })
 })
 users.post('/activities', (request, response) => {
-  const db = admin.firestore()
-  const userRef = db.collection('users').doc(request.user.uid)
-
-  const toDataSetId = moment => {
-    return moment.unix() * 1000000000
+  const dataSetId = request.body.startTimeNanos + '-' + request.body.endTimeNanos
+  const requestToGoogle = {
+    method: 'GET',
+    uri:
+      'https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes/datasets/' +
+      dataSetId,
+    timeout: 30 * 1000
   }
-  return db
-    .runTransaction(transaction => {
-      // This code may get re-run multiple times if there are conflicts.
-      return transaction.get(userRef).then(user => {
-        if (user.exists && user.data().latests && user.data().latests.lastDateOfActivitySummary) {
-          return user.data().latests.lastDateOfActivitySummary
-        } else {
-          return toDataSetId(moment(new Date()).subtract(7, 'days'))
-        }
+  execGApi(request.user.uid, requestToGoogle)
+    .then(data => {
+      summaryActivity(request.user.uid, JSON.parse(data)).then(activities => {
+        saveActivitySummary(request, activities).then(() => {
+          admin
+            .firestore()
+            .collection('users')
+            .doc(request.user.uid)
+            .collection('gameData')
+            .doc('activities')
+            .collection('fitActivity')
+            .where('startTimeNanos', '<=', request.body.startTimeNanos.toString())
+            .where('startTimeNanos', '>', request.body.endTimeNanos.toString())
+            .orderBy('startTimeNanos', 'desc')
+            .get()
+            .then(querySnapshot => {
+              const result = []
+              querySnapshot.forEach(doc => {
+                result.push(doc.data())
+              })
+              return response.status(200).json(result)
+            })
+            .catch(error => {
+              console.log('Error getting document:', error)
+              return response.status(500).json({ type: 'UnknownError', message: error })
+            })
+        })
       })
     })
-    .then(startDate => {
-      const dataSetId = startDate + '-' + toDataSetId(moment(new Date()))
-      const requestToGoogle = {
-        method: 'GET',
-        uri:
-          'https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes/datasets/' +
-          dataSetId,
-        timeout: 30 * 1000
-      }
-      execGApi(request.user.uid, requestToGoogle)
-        .then(data => {
-          summaryActivity(request.user.uid, JSON.parse(data)).then(activities => {
-            saveActivitySummary(request, activities).then(() => {
-              admin
-                .firestore()
-                .collection('users')
-                .doc(request.user.uid)
-                .collection('gameData')
-                .doc('activities')
-                .collection('fitActivity')
-                .orderBy("endTimeNanos", "desc").limit(20)
-                .get()
-                .then(querySnapshot => {
-                  const result = []
-                  querySnapshot.forEach(doc => {
-                    result.push(doc.data())
-                  })
-                  return response.status(200).json(result)
-                })
-                .catch(error => {
-                  console.log('Error getting document:', error)
-                  return response.status(500).json({ type: 'UnknownError', message: error })
-                })
-            })
-          })
-        })
-        .catch(err => {
-          console.log(err)
-          return response.status(500).json({ type: 'UnknownError', message: err })
-        })
-    })
-    .catch(error => {
-      console.log('Error getting document:', error)
-      if (error instanceof AlreadySummonedError) {
-        return response.status(500).json({ type: 'AlreadySummonedError', message: error })
-      } else {
-        return response.status(500).json({ type: 'UnknownError', message: error })
-      }
+    .catch(err => {
+      console.log(err)
+      return response.status(500).json({ type: 'UnknownError', message: err })
     })
 })
 // This HTTPS endpoint can only be accessed by your Firebase Users.
