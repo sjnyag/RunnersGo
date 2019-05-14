@@ -166,7 +166,7 @@ const execGApi = (uid, request) => {
   })
 }
 
-const aggregateFitnessDataSet = (uid, activity) => {
+const execAggregateFitnessDataSet = (uid, activity) => {
   const nanoStringToMoment = nano => {
     return moment(new Date(parseInt(nano) / 1000000))
   }
@@ -230,6 +230,33 @@ const aggregateFitnessDataSet = (uid, activity) => {
         }
       })
       .catch(error => {
+        reject(error)
+      })
+  })
+}
+
+const aggregateFitnessDataSet = (uid, activity) => {
+  return new Promise((resolve, reject) => {
+    admin
+      .firestore()
+      .collection('users')
+      .doc(uid)
+      .collection('gameData')
+      .doc('activities')
+      .collection('fitActivity')
+      .doc(activity.summary.endTimeNanos)
+      .get()
+      .then(existingActivity => {
+        if (existingActivity.exists) {
+          resolve(existingActivity.data())
+        } else {
+          execAggregateFitnessDataSet(uid, activity).then(activity => {
+            resolve(activity)
+          })
+        }
+      })
+      .catch(error => {
+        console.log('Error getting document:', error)
         reject(error)
       })
   })
