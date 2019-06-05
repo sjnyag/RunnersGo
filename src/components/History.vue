@@ -3,7 +3,7 @@
     <modal :modal="modal" v-if="modal"></modal>
     <div class="item-container" @scroll="infiniteScroll">
       <template v-for="(sessions, date) in dailySessions">
-        {{date}}
+        <template v-if="Object.keys(sessions).length > 0">{{date}}</template>
         <template v-for="(session, index) in sessions">
           <session :key="'session_'+date+index" :session="session"></session>
         </template>
@@ -30,7 +30,10 @@ export default {
   },
   data() {
     return {
-      fromMoment: moment(new Date()),
+      baseMoment: moment(new Date())
+        .utc()
+        .add(1, 'days')
+        .startOf('day'),
       dailySessions: {},
       modal: null
     }
@@ -46,14 +49,14 @@ export default {
       this.execApi()
     },
     execApi: function() {
-      this.activities(this.calcRequest(this.fromMoment))
-        .then(response => {
-          this._.forEach(response.data, session => {
-            const dateLabel = this.nanoStringToDateString(session.aggregated.startTimeNanos)
+      this.activities({ startMoment: this.baseMoment.clone(), endMoment: this.baseMoment.subtract(4, 'days').clone() })
+        .then(result => {
+          this._.forEach(result, session => {
+            const dateLabel = this.toDateLabel(session.aggregated.startTimeNanos)
             if (!this.dailySessions.hasOwnProperty(dateLabel)) {
-              this.$set(this.dailySessions, dateLabel, [])
+              this.$set(this.dailySessions, dateLabel, {})
             }
-            this.dailySessions[dateLabel].push(session)
+            this.dailySessions[dateLabel][session.aggregated.startTimeNanos] = session
           })
         })
         .catch(error => {
@@ -61,11 +64,8 @@ export default {
           this.showUnknownError()
         })
     },
-    calcRequest: function(startMoment) {
-      return { startTimeNanos: startMoment.unix() * 1000 * 1000 * 1000, endTimeNanos: startMoment.subtract(4, 'days').unix() * 1000 * 1000 * 1000 }
-    },
-    nanoStringToDateString(nano) {
-      return moment(new Date(parseInt(nano) / 1000000)).format('YYYY/MM/DD')
+    toDateLabel(unixTime) {
+      return moment(parseInt(unixTime) / (1000 * 1000)).format('YYYY/MM/DD')
     },
     showUnknownError: function() {
       this.modal = {

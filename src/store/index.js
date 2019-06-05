@@ -24,6 +24,7 @@ export default new Vuex.Store({
         'firebase.tokenSentToServer',
         'gameData.profile',
         'gameData.history',
+        'gameData.dailyFitActivities',
         'gameData.lastDateOfDailySummon'
       ]
     })

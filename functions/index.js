@@ -535,9 +535,13 @@ users.post('/activities', (request, response) => {
             .orderBy('startTimeNanos', 'desc')
             .get()
             .then(querySnapshot => {
-              const result = []
+              const result = {}
               querySnapshot.forEach(doc => {
-                result.push(doc.data())
+                const date = moment(doc.id / (1000 * 1000)).utc().startOf('day').unix() * 1000
+                if (!result.hasOwnProperty(date)) {
+                  result[date] = []
+                }
+                result[date].push(doc.data())
               })
               return response.status(200).json(result)
             })
