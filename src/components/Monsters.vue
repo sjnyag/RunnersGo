@@ -56,6 +56,7 @@ export default {
     height: 100%;
     margin: auto;
   }
+  background-color: unset;
 }
 .mdc-grid-tile__title {
   text-align: center;

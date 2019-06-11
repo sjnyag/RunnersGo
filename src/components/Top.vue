@@ -6,7 +6,7 @@
         <h1 class="title">Runners GO</h1>
       </div>
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12 logo-row">
-        <img v-lazy="iconImage">
+        <img v-lazy="iconImage" alt="logo">
       </div>
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
         <flat-button @onclick="start" name="スタート" color="green"></flat-button>
