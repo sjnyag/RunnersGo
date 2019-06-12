@@ -2,7 +2,7 @@
 module.exports = {
   NODE_ENV: '"production"',
   config: `{
-    authDomain: 'runnersgo.firebaseapp.com',
+    authDomain: 'runnersgo.web.app',
     databaseURL: 'https://runnersgo.firebaseio.com',
     projectId: 'runnersgo',
     storageBucket: 'runnersgo.appspot.com',
