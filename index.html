@@ -4,6 +4,9 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-61084721-3"></script>
     <script>
+      if (window.location.origin.includes('runnersgo.firebaseapp.com')) {
+        location.href = window.location.href.replace('runnersgo.firebaseapp.com', 'runnersgo.web.app')
+      }
       window.dataLayer = window.dataLayer || []
       function gtag() {
         dataLayer.push(arguments)
