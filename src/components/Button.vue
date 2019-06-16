@@ -19,6 +19,7 @@ $activeColor: darken($color, 8%);
 button {
   &.green {
     $color: #00e676;
+    color: #000;
     $shadowColor: darken($color, 10%);
     $activeColor: darken($color, 8%);
     background-color: $color;

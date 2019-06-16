@@ -264,8 +264,8 @@ const aggregateFitnessDataSet = (uid, activity) => {
 
 const summaryActivity = (uid, response) => {
   const isContinuous = (before, after) => {
-    // Points within 15 minutes are the same activity
-    return (after - before) / (1000 * 1000 * 1000) < 15 * 60
+    // Points within 3 minutes are the same activity
+    return (after - before) / (1000 * 1000 * 1000) < 3 * 60
   }
   const isNotShortSession = summary => {
     // A activity needs to have points over 5 minutes

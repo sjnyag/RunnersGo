@@ -3,7 +3,7 @@
     <modal :modal="modal" v-if="modal"></modal>
     <div class="item-container" @scroll="infiniteScroll">
       <template v-for="(sessions, date) in dailySessions">
-        <template v-if="Object.keys(sessions).length > 0">{{date}}</template>
+        <date-label :key="'date_'+date" :date="date" v-if="Object.keys(sessions).length > 0"></date-label>
         <template v-for="(session, index) in sessions">
           <session :key="'session_'+date+index" :session="session"></session>
         </template>
@@ -17,6 +17,7 @@
 <script>
 import { mapActions } from 'vuex'
 import Session from './Session'
+import DateLabel from './DateLabel'
 import Modal from './Modal'
 import moment from 'moment'
 import Loader from './Loader'
@@ -26,7 +27,8 @@ export default {
   components: {
     Session,
     Modal,
-    Loader
+    Loader,
+    DateLabel
   },
   data() {
     return {
