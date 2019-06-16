@@ -57,9 +57,7 @@
       as="<%= file.match(/\.css$/)?'style':'script' %>"
     />
     <% }}} %>
-    <script src="https://apis.google.com/js/platform.js"></script>
-    <link href="https://fonts.googleapis.com/css?family=M+PLUS+1p" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
     <style>
       * {
         font-family: 'M PLUS 1p';
@@ -70,6 +68,18 @@
         position: fixed;
       }
     </style>
+    <script>
+      const lasyLoader = function(d, href) {
+        var l = d.createElement('link')
+        l.rel = 'stylesheet'
+        l.media = 'only all'
+        l.href = href
+        var s = d.getElementsByTagName('script')[0]
+        s.parentNode.insertBefore(l, s)
+      }
+      lasyLoader(document, 'https://fonts.googleapis.com/css?family=M+PLUS+1p')
+      lasyLoader(document, 'https://fonts.googleapis.com/icon?family=Material+Icons')
+    </script>
   </head>
   <body style="margin: 0;background-color: #545268;">
     <noscript>
