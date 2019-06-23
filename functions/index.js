@@ -1,6 +1,6 @@
 const functions = require('firebase-functions')
 const cors = require('cors')({ origin: true })
-const rp = require('request-promise')
+const axios = require('axios')
 const admin = require('firebase-admin')
 const _ = require('lodash')
 const express = require('express')
@@ -98,20 +98,20 @@ const updateGoogleApiTokenIfNeed = (auth, uid) => {
   }
   console.log('use new token')
   return new Promise(resolve => {
-    rp({
+    axios({
       method: 'POST',
-      uri: 'https://www.googleapis.com/oauth2/v4/token',
+      url: 'https://www.googleapis.com/oauth2/v4/token',
       timeout: 30 * 1000,
-      json: {
+      data: {
         client_id: functions.config().gapi.client_id,
         client_secret: functions.config().gapi.client_secret,
         refresh_token: auth.refresh_token,
         grant_type: 'refresh_token'
       }
-    }).then(response => {
-      console.log(response)
-      if (!response.expires_at && response.expires_in) {
-        response.expires_at = new Date().getTime() + response.expires_in * 1000
+    }).then(axiosResponse => {
+      console.log(axiosResponse.data)
+      if (!axiosResponse.data.expires_at && axiosResponse.data.expires_in) {
+        axiosResponse.data.expires_at = new Date().getTime() + axiosResponse.data.expires_in * 1000
       }
       const db = admin.firestore()
       const authRef = db
@@ -123,11 +123,11 @@ const updateGoogleApiTokenIfNeed = (auth, uid) => {
         .runTransaction(transaction => {
           // This code may get re-run multiple times if there are conflicts.
           return transaction.get(authRef).then(() => {
-            transaction.set(authRef, response, { merge: true })
+            transaction.set(authRef, axiosResponse.data, { merge: true })
           })
         })
         .then(() => {
-          resolve(response)
+          resolve(axiosResponse.data)
         })
     })
   })
@@ -159,8 +159,8 @@ const resolveGApiHeader = uid => {
 const execGApi = (uid, request) => {
   return new Promise(resolve => {
     resolveGApiHeader(uid).then(header => {
-      rp(Object.assign(header, request)).then(data => {
-        resolve(data)
+      axios(Object.assign(header, request)).then(axiosResponse => {
+        resolve(axiosResponse.data)
       })
     })
   })
@@ -172,8 +172,8 @@ const execAggregateFitnessDataSet = (uid, activity) => {
   }
   const aggregateRequest = {
     method: 'POST',
-    uri: 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
-    json: {
+    url: 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
+    data: {
       aggregateBy: [
         {
           dataTypeName: 'com.google.distance.delta'
@@ -377,11 +377,11 @@ exports.exchangeGapiToken = functions.https.onRequest((request, response) => {
         message: 'Not allowed'
       })
     }
-    rp({
+    axios({
       method: 'POST',
-      uri: 'https://www.googleapis.com/oauth2/v4/token',
+      url: 'https://www.googleapis.com/oauth2/v4/token',
       timeout: 30 * 1000,
-      json: {
+      data: {
         client_id: functions.config().gapi.client_id,
         client_secret: functions.config().gapi.client_secret,
         code: request.body.code,
@@ -389,9 +389,9 @@ exports.exchangeGapiToken = functions.https.onRequest((request, response) => {
         redirect_uri: request.body.redirect_uri
       }
     })
-      .then(data => {
-        console.log(data)
-        return response.status(200).json(data)
+      .then(axiosResponse => {
+        console.log(axiosResponse.data)
+        return response.status(200).json(axiosResponse.data)
       })
       .catch(err => {
         console.log(err)
@@ -409,20 +409,20 @@ exports.refreshGapiToken = functions.https.onRequest((request, response) => {
         message: 'Not allowed'
       })
     }
-    rp({
+    axios({
       method: 'POST',
-      uri: 'https://www.googleapis.com/oauth2/v4/token',
+      url: 'https://www.googleapis.com/oauth2/v4/token',
       timeout: 30 * 1000,
-      json: {
+      data: {
         client_id: functions.config().gapi.client_id,
         client_secret: functions.config().gapi.client_secret,
         refresh_token: request.body.refresh_token,
         grant_type: 'refresh_token'
       }
     })
-      .then(data => {
-        console.log(data)
-        return response.status(200).json(data)
+      .then(axiosResponse => {
+        console.log(axiosResponse.data)
+        return response.status(200).json(axiosResponse.data)
       })
       .catch(err => {
         console.log(err)
@@ -514,14 +514,14 @@ users.post('/activities', (request, response) => {
   const dataSetId = request.body.startTimeNanos + '-' + request.body.endTimeNanos
   const requestToGoogle = {
     method: 'GET',
-    uri:
+    url:
       'https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes/datasets/' +
       dataSetId,
     timeout: 30 * 1000
   }
   execGApi(request.user.uid, requestToGoogle)
     .then(data => {
-      summaryActivity(request.user.uid, JSON.parse(data)).then(activities => {
+      summaryActivity(request.user.uid, data).then(activities => {
         saveActivitySummary(request, activities).then(() => {
           admin
             .firestore()
