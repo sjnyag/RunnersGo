@@ -143,46 +143,6 @@ const actions = {
       commit('signOut')
       resolve()
     })
-  },
-  readFitnessDataSets({ dispatch }, datasetId) {
-    console.log('reading fitness datasets...')
-    return new Promise((resolve, reject) => {
-      dispatch('initialize').then(() => {
-        window.gapi.client.fitness.users.dataSources.datasets
-          .get({
-            userId: 'me',
-            dataSourceId: 'derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes',
-            datasetId: datasetId
-          })
-          .then(
-            response => {
-              console.log('reading fitness datasets... complete')
-              resolve(response)
-            },
-            reason => {
-              console.log('Error: ' + reason.result.error.message)
-              reject(new Error(reason.result.error.message))
-            }
-          )
-      })
-    })
-  },
-  aggregateFitnessDataSet({ dispatch }, aggregateRequest) {
-    console.log('aggregating fitness dataset...')
-    return new Promise((resolve, reject) => {
-      dispatch('initialize').then(() => {
-        window.gapi.client.fitness.users.dataset.aggregate(aggregateRequest).then(
-          response => {
-            console.log('aggregating fitness datasets... complete')
-            resolve(response)
-          },
-          reason => {
-            console.log('Error: ' + reason.result.error.message)
-            reject(new Error(reason.result.error.message))
-          }
-        )
-      })
-    })
   }
 }
 

@@ -5,6 +5,7 @@ import auth from './auth'
 import google from './google'
 import firebase from './firebase'
 import gameData from './gameData'
+import fit from './fit'
 
 Vue.use(Vuex)
 
@@ -13,7 +14,8 @@ export default new Vuex.Store({
     auth,
     google,
     firebase,
-    gameData
+    gameData,
+    fit
   },
   plugins: [
     createPersistedState({
