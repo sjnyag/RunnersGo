@@ -11,11 +11,11 @@
       <div class="mdc-typography mdc-typography--body2">
         <p class="icon-text">
           <i class="material-icons">directions_run</i>
-          {{session.aggregated.stepCount}} 歩
+          {{session.stepCount}} 歩
         </p>
         <p class="icon-text">
           <i class="material-icons">trending_up</i>
-          {{session.aggregated.distance}} メートル
+          {{session.distance}} メートル
         </p>
       </div>
       <div class="mdc-card__actions">
@@ -65,21 +65,18 @@ export default {
   },
   computed: {
     period: function() {
-      return this.start.format('HH:mm') + ' ~ ' + this.end.format('HH:mm')
+      return this.start.format('YYYY/MM/DD HH:mm') + ' ~ ' + this.end.format('HH:mm')
     },
     elapsedTime: function() {
-      const minute = parseInt(this.seconds / 60)
-      const second = parseInt(this.seconds - minute * 60)
+      const minute = parseInt(this.session.seconds / 60)
+      const second = parseInt(this.session.seconds - minute * 60)
       return minute + '分' + second + '秒'
     },
-    seconds: function() {
-      return this.end.diff(this.start, 'seconds', true)
-    },
     start: function() {
-      return this.nanoStringToMoment(this.session.aggregated.startTimeNanos)
+      return this.nanoStringToMoment(this.session.startTimeNanos)
     },
     end: function() {
-      return this.nanoStringToMoment(this.session.aggregated.endTimeNanos)
+      return this.nanoStringToMoment(this.session.endTimeNanos)
     },
     backgroundImage: function() {
       return IMAGES[this.resolveImage()]
@@ -87,7 +84,7 @@ export default {
   },
   methods: {
     resolveImage() {
-      if (this.session.aggregated.distance / this.seconds > 1.6) {
+      if (this.session.distance / this.session.seconds > 1.6 || this.session.type === 8) {
         return 'RUNNING'
       }
       const hour = (this.start.hour() + this.end.hour()) / 2

@@ -65,24 +65,24 @@ const actions = {
   },
   activities({ dispatch, state, commit }, request) {
     console.log('read activities...')
-    let start = request.startMoment.unix() * 1000
-    let end = request.endMoment.unix() * 1000
-    foreachByDateDesc(start, end, date => {
-      start = date
-      return state.dailyFitActivities.hasOwnProperty(date)
-    })
-    foreachByDateAsc(end, start, date => {
+    let start = toUtcDate(request.startDate)
+    let end = toUtcDate(request.endDate)
+    foreachByDateDesc(end, start, date => {
       end = date
-      return state.dailyFitActivities.hasOwnProperty(date)
+      return state.dailyFitActivities.hasOwnProperty(date.unix() * 1000)
+    })
+    foreachByDateAsc(start, end, date => {
+      start = date
+      return state.dailyFitActivities.hasOwnProperty(date.unix() * 1000)
     })
     return new Promise((resolve, reject) => {
       const resolveActivitiesByCache = data => {
         let result = []
         const dailyResult = {}
-        foreachByDateDesc(request.startMoment.unix() * 1000, request.endMoment.unix() * 1000, date => {
-          dailyResult[date] = state.dailyFitActivities[date]
+        foreachByDateDesc(toUtcDate(request.endDate), toUtcDate(request.startDate), date => {
+          dailyResult[date] = state.dailyFitActivities[date.unix() * 1000]
           if (!dailyResult[date]) {
-            dailyResult[date] = data[date]
+            dailyResult[date] = data[date.unix() * 1000]
           }
           return true
         })
@@ -95,11 +95,25 @@ const actions = {
         resolve(result)
       }
       if (start === end) {
-        resolveActivitiesByCache()
+        resolveActivitiesByCache([])
       } else {
-        dispatch('firebase/activities', { startTimeNanos: start * 1000 * 1000, endTimeNanos: end * 1000 * 1000 }, { root: true })
+        dispatch(
+          'fit/activities',
+          {
+            startTimeNanos: start.unix() * 1000 * 1000 * 1000,
+            endTimeNanos:
+              end
+                .clone()
+                .add(1, 'days')
+                .unix() *
+              1000 *
+              1000 *
+              1000
+          },
+          { root: true }
+        )
           .then(result => {
-            commit('saveDailyFitActivities', { result: result.data, start: start, end: end })
+            commit('saveDailyFitActivities', { result: result.data, start: start.clone(), end: end.clone() })
             resolveActivitiesByCache(result.data)
           })
           .catch(error => {
@@ -111,39 +125,30 @@ const actions = {
   }
 }
 
+const toUtcDate = momentDate => {
+  return momentDate
+    .clone()
+    .utc()
+    .startOf('day')
+}
+
 const foreachByDateDesc = (start, end, proc) => {
-  if (start < end) {
-    const temp = start
-    start = end
-    end = temp
-  }
-  let current = start
+  let current = start.clone()
   while (current >= end) {
     if (!proc(current)) {
       break
     }
-    current =
-      moment(current)
-        .subtract(1, 'days')
-        .unix() * 1000
+    current = current.subtract(1, 'days')
   }
 }
 
 const foreachByDateAsc = (start, end, proc) => {
-  if (start > end) {
-    const temp = start
-    start = end
-    end = temp
-  }
-  let current = start
+  let current = start.clone()
   while (current <= end) {
     if (!proc(current)) {
       break
     }
-    current =
-      moment(current)
-        .add(1, 'days')
-        .unix() * 1000
+    current = current.add(1, 'days')
   }
 }
 
@@ -156,17 +161,18 @@ const mutations = {
   },
   saveDailyFitActivities(state, payload) {
     const yesterday = moment(new Date())
-      .utc()
       .subtract(1, 'days')
+      .utc()
       .startOf('day')
-    foreachByDateAsc(payload.end, payload.start, date => {
-      if (date >= yesterday) {
+    foreachByDateAsc(payload.start, payload.end, date => {
+      if (date > yesterday) {
         return true
       }
-      if (!payload.result.hasOwnProperty(date)) {
-        state.dailyFitActivities[date] = []
+      const unixJs = date.unix() * 1000
+      if (!payload.result.hasOwnProperty(unixJs)) {
+        state.dailyFitActivities[unixJs] = []
       } else {
-        state.dailyFitActivities[date] = payload.result[date]
+        state.dailyFitActivities[unixJs] = payload.result[unixJs]
       }
       return true
     })

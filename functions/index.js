@@ -14,6 +14,193 @@ class AlreadySummonedError extends Error {
   }
 }
 
+var DateUtil = class {
+  static diffSecondNanos(startTimeNanos, endTimeNanos) {
+    return DateUtil.toMoment(endTimeNanos).diff(DateUtil.toMoment(startTimeNanos), 'seconds', true)
+  }
+  static toMoment(nano) {
+    return moment(new Date(parseInt(nano) / 1000000))
+  }
+  static formatNanos(nano, format) {
+    return DateUtil.toMoment(nano).format(format)
+  }
+}
+
+var Activity = class {
+  static get LABEL() {
+    return {
+      0: 'In vehicle*',
+      3: 'Still (not moving)*',
+      8: 'Running*',
+      7: 'Walking*'
+    }
+  }
+  constructor(type, startTimeNanos, endTimeNanos) {
+    this.type = type
+    this.startTimeNanos = startTimeNanos
+    this.endTimeNanos = endTimeNanos
+    this.detail = {}
+  }
+  isShortRest() {
+    const diffSeconds = DateUtil.diffSecondNanos(this.startTimeNanos, this.endTimeNanos)
+    return this.type === 3 && diffSeconds < 60 * 5
+  }
+  shouldShow() {
+    return (this.type === 7 || this.type === 8) && DateUtil.diffSecondNanos(this.startTimeNanos, this.endTimeNanos) > 60 * 5
+  }
+  shouldMerge(activity) {
+    return activity.isShortRest() || activity.type === this.type
+  }
+  merge(activity) {
+    this.endTimeNanos = activity.endTimeNanos
+  }
+  toData() {
+    return {
+      distance: this.detail.distance,
+      stepCount: this.detail.stepCount,
+      startTimeNanos: this.startTimeNanos,
+      endTimeNanos: this.endTimeNanos,
+      type: this.type,
+      seconds: DateUtil.diffSecondNanos(this.startTimeNanos, this.endTimeNanos)
+    }
+  }
+  dump() {
+    return (
+      DateUtil.formatNanos(this.startTimeNanos, 'YYYY/MM/DD(ddd) HH:mm:ss') +
+      ' ~ ' +
+      DateUtil.formatNanos(this.endTimeNanos, 'HH:mm:ss') +
+      ' (' +
+      DateUtil.diffSecondNanos(this.startTimeNanos, this.endTimeNanos) +
+      ' sec.)' +
+      ' : ' +
+      Activity.LABEL[this.type] +
+      ' ' +
+      this.detail.distance +
+      'm / ' +
+      this.detail.stepCount +
+      'steps'
+    )
+  }
+}
+var Aggregator = class {
+  static get BASE_URL() {
+    return 'https://www.googleapis.com/fitness/v1/users/me/'
+  }
+  static get DATA_SOURCES() {
+    return {
+      active_minutes: 'derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes',
+      estimated_steps: 'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps',
+      aggregate: 'derived:com.google.activity.segment:com.google.android.gms:merge_activity_segments',
+      locationSamples: 'derived:com.google.location.sample:com.google.android.gms:merge_location_samples'
+    }
+  }
+  constructor(gapiPromise) {
+    this.gapiPromise = gapiPromise
+  }
+  dataSetId(start, end) {
+    return start.unix() * 1000 * 1000 * 1000 + '-' + end.unix() * 1000 * 1000 * 1000
+  }
+  run(start, end) {
+    const url = Aggregator.BASE_URL + 'dataSources/' + Aggregator.DATA_SOURCES['aggregate'] + '/datasets/' + this.dataSetId(start, end)
+    return new Promise((resolve, reject) =>
+      this.gapiPromise({ method: 'GET', url: url })
+        .then(response => {
+          const results = []
+          _.each(response.point, point => {
+            if (!point.value.hasOwnProperty('length') || point.value.length !== 1) {
+              return
+            }
+            const activity = new Activity(point.value[0].intVal, point.startTimeNanos, point.endTimeNanos)
+            const lastActivity = _.last(results)
+            if (lastActivity && lastActivity.shouldMerge(activity)) {
+              lastActivity.merge(activity)
+            } else {
+              results.push(activity)
+            }
+          })
+          return results
+        })
+        .then(results => {
+          const promises = []
+          _.each(results, activity => {
+            if (activity.shouldShow()) {
+              promises.push(
+                this.aggregateDetail(DateUtil.toMoment(activity.startTimeNanos), DateUtil.toMoment(activity.endTimeNanos)).then(detail => {
+                  return new Promise(resolve => {
+                    activity.detail = detail
+                    resolve(activity)
+                  })
+                })
+              )
+            }
+          })
+          Promise.all(promises).then(results => {
+            resolve(results)
+          })
+        })
+        .catch(err => {
+          reject(err)
+        })
+    )
+  }
+  aggregateDetail(start, end) {
+    const url = Aggregator.BASE_URL + 'dataset:aggregate'
+    const request = {
+      aggregateBy: [
+        {
+          dataTypeName: 'com.google.distance.delta'
+        },
+        {
+          dataTypeName: 'com.google.step_count.delta'
+        }
+      ],
+      bucketByTime: { durationMillis: 60000 },
+      startTimeMillis: start.subtract(2, 'minutes').unix() * 1000,
+      endTimeMillis: end.add(2, 'minutes').unix() * 1000
+    }
+    return new Promise((resolve, reject) =>
+      this.gapiPromise({ method: 'POST', url: url, data: request })
+        .then(response => {
+          if (response.bucket.length === 0) {
+            resolve({})
+          } else {
+            let startTime = null
+            let endTime = null
+            let distance = null
+            let stepCount = null
+            _.each(response.bucket, bucket => {
+              if (bucket.dataset[0].point.length > 0) {
+                const distanceData = bucket.dataset[0].point[0]
+                if (startTime === null) {
+                  startTime = distanceData.startTimeNanos
+                }
+                endTime = distanceData.endTimeNanos
+                distance += distanceData.value[0].fpVal
+              }
+              if (bucket.dataset[1].point.length > 0) {
+                const dstepCountData = bucket.dataset[1].point[0]
+                if (startTime === null) {
+                  startTime = dstepCountData.startTimeNanos
+                }
+                endTime = dstepCountData.endTimeNanos
+                stepCount += dstepCountData.value[0].intVal
+              }
+            })
+            resolve({
+              startTimeNanos: startTime,
+              endTimeNanos: endTime,
+              distance: Math.round(distance),
+              stepCount: Math.round(stepCount)
+            })
+          }
+        })
+        .catch(err => {
+          reject(err)
+        })
+    )
+  }
+}
+
 const MONSTERS = {
   1: { no: 1, rarity: 2, url: 'Amazons.png', name: 'アマゾネス' },
   2: { no: 2, rarity: 1, url: 'Dwarf.png', name: 'ドワーフ' },
@@ -37,8 +224,6 @@ const MONSTERS = {
  *
  *
  * # Functions
- * - summaryActivity
- *   - aggregateFitnessDataSet
  * - saveActivitySummary
  * - execGApi
  *     - resolveGApiHeader
@@ -166,141 +351,7 @@ const execGApi = (uid, request) => {
   })
 }
 
-const execAggregateFitnessDataSet = (uid, activity) => {
-  const nanoStringToMoment = nano => {
-    return moment(new Date(parseInt(nano) / 1000000))
-  }
-  const aggregateRequest = {
-    method: 'POST',
-    url: 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
-    data: {
-      aggregateBy: [
-        {
-          dataTypeName: 'com.google.distance.delta'
-        },
-        {
-          dataTypeName: 'com.google.step_count.delta'
-        }
-      ],
-      bucketByTime: { durationMillis: 60000 },
-      startTimeMillis:
-        nanoStringToMoment(activity.summary.startTimeNanos)
-          .subtract(2, 'minutes')
-          .unix() * 1000,
-      endTimeMillis:
-        nanoStringToMoment(activity.summary.endTimeNanos)
-          .add(2, 'minutes')
-          .unix() * 1000
-    },
-    timeout: 30 * 1000
-  }
-  return new Promise((resolve, reject) => {
-    execGApi(uid, aggregateRequest)
-      .then(result => {
-        if (result.bucket.length === 0) {
-          resolve({})
-        } else {
-          let startTime = null
-          let endTime = null
-          let distance = null
-          let stepCount = null
-          _.each(result.bucket, bucket => {
-            if (bucket.dataset[0].point.length > 0) {
-              if (startTime === null) {
-                startTime = bucket.dataset[0].point[0].startTimeNanos
-              }
-              endTime = bucket.dataset[0].point[0].endTimeNanos
-              distance += bucket.dataset[0].point[0].value[0].fpVal
-            }
-            if (bucket.dataset[1].point.length > 0) {
-              if (startTime === null) {
-                startTime = bucket.dataset[1].point[0].startTimeNanos
-              }
-              endTime = bucket.dataset[1].point[0].endTimeNanos
-              stepCount += bucket.dataset[1].point[0].value[0].intVal
-            }
-          })
-          activity.aggregated = {
-            startTimeNanos: startTime,
-            endTimeNanos: endTime,
-            distance: Math.round(distance),
-            stepCount: Math.round(stepCount)
-          }
-          resolve(activity)
-        }
-      })
-      .catch(error => {
-        reject(error)
-      })
-  })
-}
-
-const aggregateFitnessDataSet = (uid, activity) => {
-  return new Promise((resolve, reject) => {
-    admin
-      .firestore()
-      .collection('users')
-      .doc(uid)
-      .collection('gameData')
-      .doc('activities')
-      .collection('fitActivity')
-      .doc(activity.summary.endTimeNanos)
-      .get()
-      .then(existingActivity => {
-        if (existingActivity.exists) {
-          resolve(existingActivity.data())
-        } else {
-          execAggregateFitnessDataSet(uid, activity).then(activity => {
-            resolve(activity)
-          })
-        }
-      })
-      .catch(error => {
-        console.log('Error getting document:', error)
-        reject(error)
-      })
-  })
-}
-
-const summaryActivity = (uid, response) => {
-  const isContinuous = (before, after) => {
-    // Points within 3 minutes are the same activity
-    return (after - before) / (1000 * 1000 * 1000) < 3 * 60
-  }
-  const isNotShortSession = summary => {
-    // A activity needs to have points over 5 minutes
-    return (summary.endTimeNanos - summary.startTimeNanos) / (1000 * 1000 * 1000) > 5 * 60
-  }
-  const hasEnoughDistance = aggregated => {
-    // A activity needs to have points over 5 meters
-    return aggregated.distance > 500
-  }
-  return new Promise(resolve => {
-    let before = 0
-    let results = []
-    response.point.forEach(point => {
-      if (isContinuous(before, point.startTimeNanos)) {
-        _.last(results).summary.endTimeNanos = point.endTimeNanos
-      } else {
-        point.summary = {
-          startTimeNanos: point.startTimeNanos,
-          endTimeNanos: point.endTimeNanos
-        }
-        results.push(point)
-      }
-      before = point.endTimeNanos
-    })
-    const promises = []
-    _.each(_.filter(results, point => isNotShortSession(point.summary)), activity => {
-      promises.push(aggregateFitnessDataSet(uid, activity))
-    })
-    Promise.all(promises).then(results => {
-      resolve(_.filter(results, point => hasEnoughDistance(point.aggregated)))
-    })
-  })
-}
-
-const saveActivitySummary = (request, activities) => {
+const saveActivitySummary = (uid, activities) => {
   if (_.isEmpty(activities)) {
     return new Promise(resolve => {
       resolve([])
@@ -310,32 +361,20 @@ const saveActivitySummary = (request, activities) => {
     admin
       .firestore()
       .collection('users')
-      .doc(request.user.uid)
+      .doc(uid)
       .collection('gameData')
       .doc('activities')
       .collection('fitActivity')
-      .doc(activity.summary.endTimeNanos)
-      .set(activity)
+      .doc(activity.endTimeNanos)
+      .set(activity.toData())
   })
-  return new Promise((resolve, reject) => {
-    const db = admin.firestore()
-    const userRef = db.collection('users').doc(request.user.uid)
-    return db
-      .runTransaction(transaction => {
-        // This code may get re-run multiple times if there are conflicts.
-        return transaction.get(userRef).then(user => {
-          if (!user.exists) {
-            throw new Error('User not exists')
-          }
-          transaction.set(userRef, { latests: { lastDateOfActivitySummary: _.last(activities).summary.endTimeNanos } }, { merge: true })
-        })
-      })
-      .then(() => {
-        resolve(activities)
-      })
-      .catch(error => {
-        reject(error)
-      })
+  admin
+    .firestore()
+    .collection('users')
+    .doc(uid)
+    .set({ latests: { lastDateOfActivitySummary: _.last(activities).endTimeNanos } }, { merge: true })
+  return new Promise(resolve => {
+    resolve(activities)
   })
 }
 
@@ -511,51 +550,50 @@ users.post('/allMonsters', (request, response) => {
     })
 })
 users.post('/activities', (request, response) => {
-  const dataSetId = request.body.startTimeNanos + '-' + request.body.endTimeNanos
-  const requestToGoogle = {
-    method: 'GET',
-    url:
-      'https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes/datasets/' +
-      dataSetId,
-    timeout: 30 * 1000
-  }
-  execGApi(request.user.uid, requestToGoogle)
-    .then(data => {
-      summaryActivity(request.user.uid, data).then(activities => {
-        saveActivitySummary(request, activities).then(() => {
-          admin
-            .firestore()
-            .collection('users')
-            .doc(request.user.uid)
-            .collection('gameData')
-            .doc('activities')
-            .collection('fitActivity')
-            .where('startTimeNanos', '<=', request.body.startTimeNanos.toString())
-            .where('startTimeNanos', '>', request.body.endTimeNanos.toString())
-            .orderBy('startTimeNanos', 'desc')
-            .get()
-            .then(querySnapshot => {
-              const result = {}
-              querySnapshot.forEach(doc => {
-                const date = moment(doc.id / (1000 * 1000)).utc().startOf('day').unix() * 1000
-                if (!result.hasOwnProperty(date)) {
-                  result[date] = []
-                }
-                result[date].push(doc.data())
-              })
-              return response.status(200).json(result)
-            })
-            .catch(error => {
-              console.log('Error getting document:', error)
-              return response.status(500).json({ type: 'UnknownError', message: error })
-            })
-        })
+  const start = DateUtil.toMoment(request.body.startTimeNanos)
+  const end = DateUtil.toMoment(request.body.endTimeNanos)
+
+  const gapiPromise = gapiRequest => {
+    return new Promise(resolve => {
+      execGApi(request.user.uid, gapiRequest).then(axiosResponse => {
+        resolve(axiosResponse)
       })
     })
-    .catch(err => {
-      console.log(err)
-      return response.status(500).json({ type: 'UnknownError', message: err })
+  }
+  new Aggregator(gapiPromise).run(start, end).then(results => {
+    saveActivitySummary(request.user.uid, results).then(() => {
+      admin
+        .firestore()
+        .collection('users')
+        .doc(request.user.uid)
+        .collection('gameData')
+        .doc('activities')
+        .collection('fitActivity')
+        .where('startTimeNanos', '>=', request.body.startTimeNanos.toString())
+        .where('startTimeNanos', '<', request.body.endTimeNanos.toString())
+        .orderBy('startTimeNanos', 'desc')
+        .get()
+        .then(querySnapshot => {
+          const result = {}
+          querySnapshot.forEach(doc => {
+            const date =
+              moment(doc.id / (1000 * 1000))
+                .utc()
+                .startOf('day')
+                .unix() * 1000
+            if (!result.hasOwnProperty(date)) {
+              result[date] = []
+            }
+            result[date].push(doc.data())
+          })
+          return response.status(200).json(result)
+        })
+        .catch(error => {
+          console.log('Error getting document:', error)
+          return response.status(500).json({ type: 'UnknownError', message: error })
+        })
     })
+  })
 })
 // This HTTPS endpoint can only be accessed by your Firebase Users.
 // Requests need to be authorized by providing an `Authorization` HTTP header

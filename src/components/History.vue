@@ -32,10 +32,7 @@ export default {
   },
   data() {
     return {
-      baseMoment: moment(new Date())
-        .utc()
-        .add(1, 'days')
-        .startOf('day'),
+      baseMoment: moment(new Date()),
       dailySessions: {},
       modal: null
     }
@@ -51,14 +48,17 @@ export default {
       this.execApi()
     },
     execApi: function() {
-      this.activities({ startMoment: this.baseMoment.clone(), endMoment: this.baseMoment.subtract(4, 'days').clone() })
+      this.activities({
+        endDate: this.baseMoment.clone(),
+        startDate: this.baseMoment.subtract(4, 'days').clone()
+      })
         .then(result => {
           this._.forEach(result, session => {
-            const dateLabel = this.toDateLabel(session.aggregated.startTimeNanos)
+            const dateLabel = this.toDateLabel(session.startTimeNanos)
             if (!this.dailySessions.hasOwnProperty(dateLabel)) {
               this.$set(this.dailySessions, dateLabel, {})
             }
-            this.dailySessions[dateLabel][session.aggregated.startTimeNanos] = session
+            this.dailySessions[dateLabel][session.startTimeNanos] = session
           })
         })
         .catch(error => {

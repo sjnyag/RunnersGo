@@ -5,6 +5,7 @@
   "author": "sjnya",
   "private": true,
   "scripts": {
+    "try": "node trial.js",
     "dev": "node build/dev-server.js",
     "start": "npm run dev",
     "unit": "jest --config test/unit/jest.conf.js --coverage",
