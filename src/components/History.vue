@@ -50,7 +50,7 @@ export default {
     execApi: function() {
       this.activities({
         endDate: this.baseMoment.clone(),
-        startDate: this.baseMoment.subtract(4, 'days').clone()
+        startDate: this.baseMoment.subtract(3, 'days').clone()
       })
         .then(result => {
           this._.forEach(result, session => {

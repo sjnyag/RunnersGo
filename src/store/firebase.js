@@ -284,19 +284,19 @@ const actions = {
         })
     })
   },
-  activities({ dispatch }, request) {
-    console.log('activities...')
+  saveActivities({ dispatch }, request) {
+    console.log('save activities...')
     return new Promise((resolve, reject) => {
       dispatch('execUserApi', {
         url: process.env.cloud_function_base_url + 'users/activities',
         request: request
       })
         .then(result => {
-          console.log('activities... success')
+          console.log('save activities... success')
           resolve(result)
         })
         .catch(error => {
-          console.log('activities... error', error)
+          console.log('save activities... error', error)
           reject(error)
         })
     })

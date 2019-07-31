@@ -80,9 +80,9 @@ const actions = {
         let result = []
         const dailyResult = {}
         foreachByDateDesc(toUtcDate(request.endDate), toUtcDate(request.startDate), date => {
-          dailyResult[date] = state.dailyFitActivities[date.unix() * 1000]
-          if (!dailyResult[date]) {
-            dailyResult[date] = data[date.unix() * 1000]
+          dailyResult[date.unix()] = state.dailyFitActivities[date.unix() * 1000]
+          if (!dailyResult[date.unix()]) {
+            dailyResult[date.unix()] = data[date.unix() * 1000]
           }
           return true
         })
@@ -91,8 +91,21 @@ const actions = {
             result = result.concat(sessions)
           }
         })
-        console.log('read activities... complete')
-        resolve(result)
+        result = _.sortBy(result, [
+          r => {
+            return r.startDate
+          }
+        ]).reverse()
+        dispatch(
+          'firebase/saveActivities',
+          {
+            dailyActivities: dailyResult
+          },
+          { root: true }
+        ).then(() => {
+          console.log('read activities... complete')
+          resolve(result)
+        })
       }
       if (start === end) {
         resolveActivitiesByCache([])

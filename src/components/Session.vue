@@ -65,7 +65,7 @@ export default {
   },
   computed: {
     period: function() {
-      return this.start.format('YYYY/MM/DD HH:mm') + ' ~ ' + this.end.format('HH:mm')
+      return this.start.format('YYYY/MM/DD(ddd) HH:mm') + ' ~ ' + this.end.format('HH:mm')
     },
     elapsedTime: function() {
       const minute = parseInt(this.session.seconds / 60)

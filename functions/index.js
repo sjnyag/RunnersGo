@@ -550,6 +550,22 @@ users.post('/allMonsters', (request, response) => {
     })
 })
 users.post('/activities', (request, response) => {
+  _.each(request.body.dailyActivities, (activities, date) => {
+    _.each(activities, activity => {
+      admin
+        .firestore()
+        .collection('users')
+        .doc(request.user.uid)
+        .collection('gameData')
+        .doc('activities')
+        .collection(date)
+        .doc(activity.startTimeNanos)
+        .set(activity)
+    })
+  })
+  return response.status(200).json(request.dailyActivities)
+})
+users.get('/activities', (request, response) => {
   const start = DateUtil.toMoment(request.body.startTimeNanos)
   const end = DateUtil.toMoment(request.body.endTimeNanos)
 
